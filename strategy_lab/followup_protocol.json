@@ -1,0 +1,13 @@
+{
+  "scope": "2020 calibration exploration; eight component ablations and two residual-IV hybrids",
+  "pricing_sample": "Exactly the 1068 fitted snapshots and 118117 withheld contracts from the original strategy lab",
+  "pricing_selection": "Keep reference IV interpolation unless a hybrid lowers common-quote MAE by at least 5%, also lowers equally weighted snapshot MAE, and has no higher rate of failing the same within-expiry strike-grid checks. These checks are necessary, not sufficient, for absence of arbitrage.",
+  "strategy_replay": "Original rules, buffers, costs, fixed contract identities and next-close execution; replay all available daily strategies separately with calendar structural, physical-clock hybrid, calendar-clock hybrid and reference interpolation marks. Structural sensitivities remain the calendar hedge-sizing proxy.",
+  "qualification": "A strategy can qualify only with at least 50 resolved trades, no unresolved positions, positive mean net at quoted spreads, positive lower endpoint of the calendar-week cluster bootstrap 95% interval, and positive mean after removing any one name. No threshold search.",
+  "maker_gate": "Midpoint profitability or a spread-cost counterfactual cannot validate a maker strategy. Require timestamped option NBBO and trades, quote sizes and conditions, synchronized underlying, executable fees, latency and queue assumptions, partial fills, legging and inventory limits, and post-fill markouts before claiming fill-adjusted profit.",
+  "future_window": ["2026-10-01", "2027-03-31"],
+  "future_status": "Reserved prospective paper evaluation only. Outcomes are unavailable at freeze time. No orders or scheduled jobs.",
+  "future_inputs": "Parameters fitted only to contemporaneously available reference quotes; historical clock features strictly before signal; earnings calendars must be point-in-time known; same-strike put/call twins remain withheld. Exclude names while dividends or corporate actions violate the pricing assumptions. Insufficient eligible observations means inconclusive, not rule changes.",
+  "future_primary": "Held-strike MAE versus reference-only interpolation, equally weighted by snapshot; any qualified strategy separately judged on net P&L with unresolved outcomes disclosed. No new strategy qualifies by looking at the reserved outcomes.",
+  "limitations": "Six selected names, one crisis calibration year, retrospective earnings dates, European approximation, no financing/borrow/margin/assignment model; quoted executions are scenarios, not verified fills. A candidate passing the statistical gate still requires these data and execution gaps to be resolved before deployment."
+}

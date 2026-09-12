@@ -1,0 +1,8 @@
+{
+ "scope":"Add 2016-2019 same five names to previous 2020-2025 panel without selecting thresholds",
+ "historical_window":"Same last 8 completed events, minimum 6; 2015 history implies early 2016 warmup exclusions",
+ "wide_screen":"Separate current-market-hybrid screen: all target strikes in 80-120% spot, all reference-supported expiries selected by existing pipeline (up to 5), 8-90 DTE, one signal date per event",
+ "thresholds":[0.05,0.10,0.20],
+ "not_full_universe":"Reference strikes remain withheld from trading evaluation; no far wings, no daily full-period sweep; fixed pre-earnings entry and post-earnings exit",
+ "costs_and_timing":"Unchanged from historical_jump_plan.json"
+}

@@ -1,0 +1,41 @@
+{
+  "created": "2026-09-10",
+  "question": "Does replacing the implied earnings jump with past realized earnings variance create profitable signals?",
+  "samples": [
+    "2020 development panel",
+    "2025 previously examined external panel"
+  ],
+  "history": "Own-name last 8 completed earnings, minimum 6; fixed close-before to close-after announcement window; subtract two ordinary sessions' past mean squared return; no directional forecast",
+  "scale": "sqrt(forecast_variance / 0.823875), preserving compensated mixture shape",
+  "models": [
+    "frozen_market_structural",
+    "historical_structural",
+    "historical_reference_anchored",
+    "reference_only"
+  ],
+  "freeze": "latest identifiable reference-only structural fit at or before signal, same upcoming earnings, max 30 calendar days old; no refitting after jump replacement",
+  "signal": "three sessions before reported earnings; same-day historical data available; threshold relative to signal midpoint",
+  "entry": "following close, two sessions before earnings; identical trades in midpoint and crossed-spread scenarios",
+  "exit": "first close after reported earnings date, fixed identities",
+  "thresholds": [
+    0,
+    0.05,
+    0.1,
+    0.2
+  ],
+  "primary_threshold": 0.1,
+  "instruments": "closest target-strike ATM straddle and nearest 3 target strikes per call/put at first eligible expiry 8-45 calendar days from signal",
+  "hedges": "initial reference-IV stock delta held fixed; also report unhedged",
+  "costs": "midpoint gross; midpoint minus $0.65/contract/side commissions and 2bp/side stock cost; bid/ask crossing plus same commissions/stock cost; no additional option slippage",
+  "spread_filter": "no relative-spread screen for targets; valid positive signal bid, mid >= $0.25 per leg; record spreads; no exit moneyness filters",
+  "aggregation": "per-trade premium-normalized result and equal-event averaged result; long/short split; event-cluster bootstrap; do not select winning threshold",
+  "limitations": [
+    "retrospective actual earnings dates, not point-in-time announced schedules",
+    "daily quoted-fill scenarios",
+    "European approximation to US equity options",
+    "no funding, borrow, margin, or assignment model",
+    "historical P variance inserted into Q model is a trading hypothesis, not true value"
+  ],
+  "expansion": "2021-2024 same five nondividend names; added before inspecting first-panel return summaries; same rules and thresholds; anchor snapshots 15 and 10 sessions before event",
+  "actual_public_api_comparison": "Also evaluate the delivered MarketSlice hybrid and market-only curves at the signal, plus a jump replacement anchored to the delivered hybrid. Added to directly address current-model threshold request; previous linear-anchor results retained."
+}

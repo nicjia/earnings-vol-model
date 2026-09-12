@@ -1,0 +1,135 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,parskip}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+\newcommand{\E}{\mathbb E}
+\title{Event-Aware Equity-Option Pricing}
+\author{}\date{September 2026}
+\begin{document}
+\maketitle
+
+\section{Structural model}
+Let $S_0$ be spot, $K$ strike, $T$ elapsed calendar years to expiry, $r$ the rate,
+and $q$ dividend yield. Write $F=S_0e^{(r-q)T}$ and $D=e^{-rT}$.
+A scheduled event affects an option only when its event time lies after valuation
+and no later than expiry. For flat diffusion and independent scheduled jumps,
+\[
+ \log(S_T/S_0)=(r-q)T-\tfrac12\sigma_d^2\tau
+       +\sigma_d\sqrt{\tau}Z+\sum_j J_j.
+\]
+Here $\tau$ is variance time. Calendar time governs carry and discounting, while
+$\tau$ may weight exchange sessions, overnight closures, weekends and holidays
+differently. The default calendar clock has $\tau=T$. Clock weights inferred
+from historical stock returns are physical estimates, not automatically
+risk-neutral calibration parameters.
+
+Each jump can have a Gaussian-mixture pricing distribution,
+\[
+ f_J(x)=\sum_{i=1}^{M}w_i\mathcal N(x;\mu_i,s_i^2),\qquad
+ w_i\ge0,\quad\sum_iw_i=1.
+\]
+Given raw centres $m_i$, the common shift
+\[
+ \mu_i=m_i-\log\left(\sum_iw_i e^{m_i+s_i^2/2}\right)
+\]
+ensures $\E^Q[e^J]=1$. This is a pricing-measure martingale condition. The
+components are not identified as EPS beat/miss outcomes, and their weights are
+not estimates of physical earnings probabilities.
+
+\section{Closed-form mixture prices}
+With one event and flat diffusion, condition on the mixture component. The
+terminal log return is Gaussian on each component, so
+\[
+ C=D\sum_iw_i\{F_i\Phi(d_{1i})-K\Phi(d_{2i})\},
+\]
+where
+\[
+ F_i=Fe^{\mu_i+s_i^2/2},\quad B_i=\sigma_d^2\tau+s_i^2,\quad
+ d_{1i}=\frac{\log(F_i/K)+B_i/2}{\sqrt{B_i}},\quad d_{2i}=d_{1i}-\sqrt{B_i}.
+\]
+Put prices follow from parity. Conditional Gaussian structure makes this finite
+mixture formula possible; jumps in general do not necessarily require Monte
+Carlo, nor does a fixed event date alone guarantee such a formula.
+
+\section{Heston and Fourier pricing}
+The optional Heston variance process evolves in variance time,
+\[
+ dv_\tau=\kappa(\theta-v_\tau)d\tau+\xi\sqrt{v_\tau}\,dW^v_\tau,
+ \qquad d\langle W^S,W^v\rangle_\tau=\rho\,d\tau.
+\]
+Under the assumed independence of scheduled jumps and the diffusion,
+\[
+ \varphi_{\rm total}(u)=\varphi_{\rm Heston}(u;\tau)
+     e^{iu(r-q)T}\prod_j\varphi_{J_j}(u),\qquad
+ \varphi_J(u)=\sum_iw_i e^{iu\mu_i-u^2s_i^2/2},
+\]
+when the Heston characteristic function is evaluated with zero carry. The COS
+method recovers option values from this characteristic function. Multiplying
+jump characteristic functions costs $O(N\sum_j M_j)$ component evaluations at
+$N$ Fourier frequencies, rather than enumerating $\prod_j M_j$ joint scenarios.
+That statement concerns the characteristic-function calculation, not the entire
+calibration runtime. Numerical truncation still requires care.
+
+The research estimator fixes $\theta=v_0=\sigma^2$ and $\kappa=2$, and fits
+$\sigma,\xi,\rho$ and an event scale with a prescribed mixture shape. It is a
+restricted candidate specification, not a universal Heston calibration.
+Some studies fit only snapshots with an expiry before and after the next event;
+this is a conservative identification rule, not proof that other term structures
+contain no event information. Later experiments carry an earlier identifiable
+estimate forward or fit a simpler variance term structure.
+
+\section{Market-anchored pricing}
+Reference contracts determine forwards and observed implied volatilities.
+Target strikes and their parity twins are withheld. For the structural hybrid,
+\[
+ \sigma_{\rm prior}(k)=\sigma_{\rm structural}(k)
+ +\operatorname{interp}\bigl[\sigma_{\rm reference}
+                           -\sigma_{\rm structural,reference}\bigr](k).
+\]
+The market-only alternative uses PCHIP interpolation of reference IV. These
+priors are converted to normalized call prices $c(x)=C/(DF)$, $x=K/F$.
+A natural cubic spline is fitted on reference strikes and intervening midpoints,
+penalizing reference-price error and deviation from the prior between anchors.
+Reference errors are scaled by half-spreads with a small floor.
+
+Linear derivative restrictions enforce convexity and decreasing call prices:
+$c''\ge0$ and $-1\le c'\le0$, together with payoff bounds. Explicit convex tails
+continue the curve outside its anchor range. Put prices use the same forward
+and parity. These are within-expiry restrictions; the construction does not
+claim absence of calendar arbitrage across all maturities, nor does it model
+American early exercise.
+
+\section{Event-preserving repricing}
+A simple event model writes total implied variance approximately as
+\[
+ w(T)=aT+b\,n(T),\qquad a,b\ge0,
+\]
+where $n(T)$ counts included events. An ATM fit, a two-expiry difference, or a
+strike-dependent fit gives alternative estimates. A structural estimate can
+instead use the implied-variance difference between model prices with and
+without an event, rather than equating log-jump variance with implied variance.
+
+A transport experiment refreshes the current reference smile, keeps its
+background variance rate, and removes the estimated event term after the
+release. Every method receives the later stock price at scoring time. This is
+conditional option repricing, not a stock-return forecast. With only release
+dates, a fixed two-session bracket covers the possible announcement timing;
+it is never chosen using the larger realized return.
+
+\section{Empirical outcome and scope}
+The final structural hybrid has mean absolute error of 4.849 spot basis points
+on 23,650 withheld quotes from 251 eligible snapshots in January--August 2025;
+87.0\% lie inside bid--ask. The market-only constrained mode scores 4.811 bp and
+89.7\%. These methods are competitive with market interpolation, not a
+consistent improvement over it. Complete tables, strategy outcomes and sample
+limits are in \texttt{PROJECT.md} and \texttt{final\_metrics.json}.
+
+No robust after-cost trading advantage or superior structural hedge was
+established. Pricing-measure quantities do not identify physical fair values;
+a market-versus-model residual is not automatically mispricing. The ingredients
+have prior literature. Scheduled earnings jumps, Heston, Fourier pricing,
+variance clocks and constrained interpolation are not claimed as new inventions.
+Historical event schedules, European exercise assumptions and daily execution
+scenarios limit the scope of the empirical claims.
+
+\end{document}

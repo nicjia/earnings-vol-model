@@ -1,0 +1,24 @@
+{
+  "frozen_at": "2026-09-11T06:32:56.821014+00:00",
+  "names": [
+    "ADSK",
+    "BIIB",
+    "VRTX",
+    "NOW",
+    "ISRG"
+  ],
+  "years": [
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "primary_rule": "Current hybrid gap > 5%; signal midpoint >= $1; full spread <=10%; hybrid/market-only directional agreement; gap > signal full-spread proxy + $0.013 per share roundtrip commission",
+  "timing": "signal -10, entry -9, exit -6 trading sessions before earnings; expiry after earnings",
+  "hedge": "primary entry-date vendor delta; also no hedge and signal reference delta",
+  "fill": "primary full bid/ask; mid and partial sensitivity",
+  "calibration": "same existing reference split, Heston/mixture calibration and MarketSlice; anchor snapshots -15,-10 sessions",
+  "history": "own name last 8 events, minimum6 retained for same pipeline eligibility",
+  "no_reselection": "No rule modifications using these additional-name results",
+  "limitations": "Historical actual calendar, quotes not guaranteed fills, European approximation"
+}

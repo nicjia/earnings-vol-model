@@ -1,0 +1,170 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,parskip}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+\newcommand{\E}{\mathbb E}
+\setlength{\parskip}{5pt}
+\title{Earnings-Aware Option Pricing}
+\author{}\date{}
+\begin{document}
+\maketitle
+\vspace{-3.2em}
+
+\section{The Main Idea}
+
+Black Scholes often fails during earnings events and sometimes for overnight returns. 
+This failure occurs because the model assumes a constant volatility, which can't really be
+properly scaled for different events or earnings reports. The stock may not move much 
+during the days leading up to the event, before gapping 5-10\% overnight. This model 
+attempts to fix this by splitting the stock's variance into two parts. It prices the 
+ordinary day-to-day movement separately from the single jump on the known earnings date.
+Optionally, the diffusion part can also have stochastic volatility (Heston) to produce a realistic skew.
+
+Notation: spot $S_0$, strike $K$, years to expiry $T$, rate $r$, dividend yield
+$q$. Forward $F=S_0e^{(r-q)T}$, discount $D=e^{-rT}$. Earnings happens at a fixed
+time $t_e$.
+
+\section{The Earnings Jump}
+
+Standard ways to process jumps are either Merton's jump-diffusion or Kou's double-exponential.
+However, both of these are continuous-time models with a Poisson process for the jump. 
+In this case, we replace this jump J with K different normals, one per "scenario" for how the earnings report lands.
+
+\begin{equation}
+f_J(x) = \sum_{i=1}^{K} w_i\,\mathcal N(x;\,\mu_i,\,s_i^2).
+\end{equation}
+
+This represents a weighted average of bell curves. Each scenario $i$ has a weight $w_i$ (the probability of that scenario, summing to 1), a mean $\mu_i$ (the expected jump size for that scenario), and a variance $s_i^2$ (the uncertainty around that jump size).
+This allows you to represent different possible outcomes of the earnings report, such as a beat, miss, or in-line result, and their associated probabilities and uncertainties.
+
+
+\textbf{Keeping it arbitrage-free.} Under the risk-neutral measure the jump can't
+add any drift to the stock, which means it has to satisfy $\E[e^J]=1$. Given the
+scenario centres $m_i$ you actually want, you shift all of them by the same
+constant so this holds:
+\begin{equation}
+\mu_i = m_i - \log\!\Big(\textstyle\sum_i w_i\,e^{\,m_i+s_i^2/2}\Big).
+\end{equation}
+Shifting every centre by the same amount keeps the shape (the spacing and widths)
+and just recenters the whole distribution. Note this is a pricing adjustment, not a claim
+about real-world probabilities: a distribution fit to historical returns is not
+automatically the risk-neutral one.
+
+\section{Pricing with no simulation}
+
+Usually, adding jumps means Monte Carlo simulations across many price paths and averaging
+the payoffs. However, for this, that is not needed as the event date is fixed. 
+
+Suppose scenario $i$ happened. Then over the life of the option the log-return is
+the ordinary diffusion (a normal) plus that scenario's jump (also a normal). The
+sum of two independent normals is normal, so on that branch the terminal price is
+lognormal --- exactly the same as Black--Scholes. So each branch prices with the
+standard Black-76 formula, and the option value is the probability-weighted sum
+over branches:
+\begin{equation}
+C = D\sum_{i=1}^{K} w_i\,\big[F_i\,\Phi(d_{1i})-K\,\Phi(d_{2i})\big],
+\end{equation}
+where $\Phi$ is the normal CDF and each branch has its own forward and variance,
+\begin{equation}
+F_i = F\,e^{\,\mu_i+s_i^2/2},\qquad
+B_i = \sigma_d^2 T + s_i^2,\qquad
+d_{1i}=\frac{\log(F_i/K)+B_i/2}{\sqrt{B_i}},\quad d_{2i}=d_{1i}-\sqrt{B_i}.
+\end{equation}
+The branch variance $B_i$ is just the diffusion variance plus that scenario's jump
+variance. Because $\sum_i w_iF_i=F$, put--call parity holds and, with no event, the
+valuation collapses back to plain Black--Scholes. So instead of simulating, you
+can split the world into $K$ branches at $t_e$, price each in closed form, and add them
+up.
+
+\section{Adding skew: the Heston model}
+
+Jumps give the smile fat tails, but they don't produce the steady downward
+\emph{skew} of equity options as out-of-the-money puts persistently pricier than
+calls. To capture it, you can let volatility itself be random and
+negatively correlated with the stock. This results in the standard Heston model, replacing the constant
+$\sigma$ with a time-varying
+variance $v_t$ that follows its own process,
+\begin{equation}
+dv_t = \kappa(\theta - v_t)\,dt + \xi\sqrt{v_t}\,dW_t^{v},
+\qquad \mathrm{corr}(dW_t^S, dW_t^v)=\rho.
+\end{equation}
+
+\section{Combining them together}
+
+Now, we have two indepdent pieces of randomness. We have both the Heston diffusion representing everyday moves,
+as well asthe earnings jump modeling the one-off shock. 
+A \emph{characteristic function}
+(CF) is the Fourier transform of a return distribution, $\varphi(u)=\E[e^{iu X}]$, 
+encoding the whole distribution in one function. It's useful here because Heston
+has no closed-form density but does have a closed-form CF.
+
+For independent R.V.s, the CF of the sum is the product of the CFs. So
+the total return CF is just
+\begin{equation}
+\varphi_{\text{total}}(u)=\varphi_{\text{Heston}}(u)\cdot\varphi_{J}(u),
+\qquad
+\varphi_{J}(u)=\sum_{i} w_i\,e^{\,iu\mu_i-\frac12 u^2 s_i^2},
+\end{equation}
+where $\varphi_J$ is the CF of the Gaussian mixture. 
+
+Combining Heston with a jump this way is a Bates model; the only difference here is
+that the jump is the scheduled earnings mixture, applied only to expiries with
+$t_e\le T$, rather than a Poisson jump.
+
+\section{Pricing from the CF: COS}
+
+With $\varphi_{\text{total}}$ in hand, prices come from the COS method
+(Fang--Oosterlee): expand the risk-neutral density in a Fourier-cosine series on a
+truncated range $[a,b]$ (set from the cumulants of $\varphi_{\text{total}}$). The
+payoff's cosine coefficients are analytic, so the price collapses to a length-$N$
+dot product against $\mathrm{Re}\{\varphi_{\text{total}}(u_k)e^{-iu_k a}\}$,
+$N\approx 256$--$512$, $O(N)$ per strike. The engine is model-agnostic: switching
+Black--Scholes $\to$ Heston $\to$ Bates only swaps the CF passed in
+(\texttt{cos\_pricer.py}).
+
+\section{Calibration}
+
+Parameters are pinned sequentially from market structure rather than handed to one
+optimizer, so the final fit only shapes the smile:
+\begin{enumerate}\itemsep2pt
+\item \textbf{Forward} from parity, $F=K+e^{rT}(C-P)$; invert Black-76 on the OTM
+side for market IV per strike.
+\item \textbf{Diffusion vol} is isolated by differencing two expiries that share
+the event, which cancels it:
+$\;\sigma_d^2=(\text{IV}_2^2 T_2-\text{IV}_1^2 T_1)/(T_2-T_1)$.
+\item \textbf{Event variance} $V_e$ from the term-structure step: with
+$\text{IV}(T)^2T\approx a+bT+\mathbf1_{\{t_e\le T\}}V_e$, fit $a,b$ on pre-event
+expiries and read $V_e$ off a post-event one.
+\item \textbf{Jump scale} matched to the ATM straddle \emph{price}, not its
+variance --- a fat jump lifts the ATM straddle above its variance-implied level, so
+matching variance leaves a uniform cross-strike bias that this removes.
+\item \textbf{Remainder} (Heston $v_0,\xi,\rho$ and the mixture weights) fit to the
+surface by minimizing IV-RMS. With the structural terms locked, only the skew and
+smile are free.
+\end{enumerate}
+
+\section{Validation and overfitting}
+
+The $0.00$ vol-point out-of-sample number is self-consistency, not forecasting: two
+expiries bracketing the same event must carry the same forward event variance, so
+recovering $V_e$ from one and matching the other only confirms forward-variance
+additivity and a correct implementation.
+
+The substantive test is against realized returns, which quotes can't referee.
+Across 144 events (18 names, last 8 quarters), earnings days are $\sim$1.6\% of
+trading days but a median 18\% of annual variance, and the reaction is
+$\sim$3.5$\times$ a normal day --- the diffusion/event split is warranted. The
+beat/miss assumption is not: on the pooled realized moves, BIC selects a single
+fat-tailed component over 2 or 3. So the physical jump is best modeled unimodal;
+the mixture remains useful degrees of freedom for fitting the \emph{implied} smile,
+where asymmetry is genuinely priced, but it is not the return law.
+
+\section{Scope}
+
+This is not an alpha claim --- earnings and skew are already priced. The model gives a
+consistent diffusion/skew/event decomposition of the surface, forecasts quantities
+a single vol can't (e.g.\ the post-print IV crush), and flags where its marks
+diverge from the market. Fits are in-sample; a systematic implied-vs-realized
+premium study requires option history.
+
+\end{document}

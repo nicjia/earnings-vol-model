@@ -1,0 +1,230 @@
+{
+  "pricing": [
+    {
+      "year": 2020,
+      "method": "linear_iv",
+      "quotes": 118117,
+      "snapshots": 1068,
+      "names": 6,
+      "mae_spot_bp": 4.356603488155423,
+      "mae_dollars": 0.2989308628348179,
+      "median_absolute_dollars": 0.13898734055857176,
+      "within_bidask_pct": 93.33203518545172,
+      "grid_pass_pct": null
+    },
+    {
+      "year": 2020,
+      "method": "pchip",
+      "quotes": 118117,
+      "snapshots": 1068,
+      "names": 6,
+      "mae_spot_bp": 4.131154646007001,
+      "mae_dollars": 0.25580488193987144,
+      "median_absolute_dollars": 0.11335014667469068,
+      "within_bidask_pct": 96.2545611554645,
+      "grid_pass_pct": null
+    },
+    {
+      "year": 2020,
+      "method": "ssvi",
+      "quotes": 118117,
+      "snapshots": 1068,
+      "names": 6,
+      "mae_spot_bp": 4.841202527303636,
+      "mae_dollars": 0.37342340512326727,
+      "median_absolute_dollars": 0.21033326785859074,
+      "within_bidask_pct": 88.32005553815286,
+      "grid_pass_pct": null
+    },
+    {
+      "year": 2020,
+      "method": "convex_pchip_10",
+      "quotes": 118117,
+      "snapshots": 1068,
+      "names": 6,
+      "mae_spot_bp": 4.094639033599047,
+      "mae_dollars": 0.25404919570423934,
+      "median_absolute_dollars": 0.11094891918742178,
+      "within_bidask_pct": 96.46536908319717,
+      "grid_pass_pct": 100.0
+    },
+    {
+      "year": 2020,
+      "method": "convex_hybrid_10",
+      "quotes": 118117,
+      "snapshots": 1068,
+      "names": 6,
+      "mae_spot_bp": 4.073875230239611,
+      "mae_dollars": 0.2649013093911699,
+      "median_absolute_dollars": 0.12242383190626072,
+      "within_bidask_pct": 95.49260479016569,
+      "grid_pass_pct": 100.0
+    },
+    {
+      "year": 2025,
+      "method": "linear_iv",
+      "quotes": 23650,
+      "snapshots": 251,
+      "names": 5,
+      "mae_spot_bp": 4.856498135199818,
+      "mae_dollars": 0.22697721663518286,
+      "median_absolute_dollars": 0.06448380555432301,
+      "within_bidask_pct": 85.01902748414376,
+      "grid_pass_pct": null
+    },
+    {
+      "year": 2025,
+      "method": "pchip",
+      "quotes": 23650,
+      "snapshots": 251,
+      "names": 5,
+      "mae_spot_bp": 4.854996511251941,
+      "mae_dollars": 0.22903718477120388,
+      "median_absolute_dollars": 0.060595108966575495,
+      "within_bidask_pct": 88.90063424947145,
+      "grid_pass_pct": null
+    },
+    {
+      "year": 2025,
+      "method": "ssvi",
+      "quotes": 23650,
+      "snapshots": 251,
+      "names": 5,
+      "mae_spot_bp": 5.675744457993363,
+      "mae_dollars": 0.25304004007233283,
+      "median_absolute_dollars": 0.10688936957601713,
+      "within_bidask_pct": 73.51374207188161,
+      "grid_pass_pct": null
+    },
+    {
+      "year": 2025,
+      "method": "convex_pchip_10",
+      "quotes": 23650,
+      "snapshots": 251,
+      "names": 5,
+      "mae_spot_bp": 4.810780918383808,
+      "mae_dollars": 0.2264386149482074,
+      "median_absolute_dollars": 0.05822177887892277,
+      "within_bidask_pct": 89.71670190274843,
+      "grid_pass_pct": 100.0
+    },
+    {
+      "year": 2025,
+      "method": "convex_hybrid_10",
+      "quotes": 23650,
+      "snapshots": 251,
+      "names": 5,
+      "mae_spot_bp": 4.84937198214475,
+      "mae_dollars": 0.22793998745656271,
+      "median_absolute_dollars": 0.06199123092735315,
+      "within_bidask_pct": 86.98097251585624,
+      "grid_pass_pct": 100.0
+    }
+  ],
+  "transport": [
+    {
+      "year": 2020,
+      "method": "sticky_strike",
+      "quotes": 2046,
+      "events": 18,
+      "equal_event_mae_spot_bp": 90.54010141400927
+    },
+    {
+      "year": 2020,
+      "method": "sticky_moneyness",
+      "quotes": 2046,
+      "events": 18,
+      "equal_event_mae_spot_bp": 92.26748256554608
+    },
+    {
+      "year": 2020,
+      "method": "simple_event",
+      "quotes": 2046,
+      "events": 18,
+      "equal_event_mae_spot_bp": 38.67953579631264
+    },
+    {
+      "year": 2020,
+      "method": "local_event",
+      "quotes": 2046,
+      "events": 18,
+      "equal_event_mae_spot_bp": 38.17534385930316
+    },
+    {
+      "year": 2020,
+      "method": "smile_event",
+      "quotes": 2046,
+      "events": 18,
+      "equal_event_mae_spot_bp": 37.559024871126546
+    },
+    {
+      "year": 2020,
+      "method": "model_event",
+      "quotes": 2046,
+      "events": 18,
+      "equal_event_mae_spot_bp": 55.19703209189174
+    },
+    {
+      "year": 2020,
+      "method": "cf_event",
+      "quotes": 2046,
+      "events": 18,
+      "equal_event_mae_spot_bp": 54.09363823920335
+    },
+    {
+      "year": 2025,
+      "method": "sticky_strike",
+      "quotes": 1322,
+      "events": 14,
+      "equal_event_mae_spot_bp": 72.23596515256239
+    },
+    {
+      "year": 2025,
+      "method": "sticky_moneyness",
+      "quotes": 1322,
+      "events": 14,
+      "equal_event_mae_spot_bp": 72.65770224103082
+    },
+    {
+      "year": 2025,
+      "method": "simple_event",
+      "quotes": 1322,
+      "events": 14,
+      "equal_event_mae_spot_bp": 21.655160140133848
+    },
+    {
+      "year": 2025,
+      "method": "local_event",
+      "quotes": 1322,
+      "events": 14,
+      "equal_event_mae_spot_bp": 18.906129496776764
+    },
+    {
+      "year": 2025,
+      "method": "smile_event",
+      "quotes": 1322,
+      "events": 14,
+      "equal_event_mae_spot_bp": 23.87345900557863
+    },
+    {
+      "year": 2025,
+      "method": "model_event",
+      "quotes": 1322,
+      "events": 14,
+      "equal_event_mae_spot_bp": 26.053588941720903
+    },
+    {
+      "year": 2025,
+      "method": "cf_event",
+      "quotes": 1322,
+      "events": 14,
+      "equal_event_mae_spot_bp": 22.099190890372654
+    }
+  ],
+  "interpretation": {
+    "pricing": "Reference-conditioned pricing, with target strikes withheld. 2020 development, 2025 historical confirmation through August 29.",
+    "transport": "Conditional on the later observed stock price; fixed two-session announcement bracket. 2025 already used in earlier research, so this is descriptive external-year comparison, not a new untouched confirmation.",
+    "novelty": "Established model families and constrained interpolation; no claim of a new mathematical pricing method.",
+    "profitability": "No robust after-cost trading edge established."
+  }
+}

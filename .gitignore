@@ -4,3 +4,26 @@ __pycache__/
 .env
 .venv/
 venv/
+
+# latex build artifacts
+*.aux
+*.log
+*.out
+*.pdf
+
+# data — never commit (licensed: WRDS / LOBSTER / OptionMetrics)
+*.csv
+*.parquet
+*.npz
+*.npy
+*.pkl
+*.h5
+*.feather
+*.db
+*.sqlite
+*.zip
+wrds_studies/
+strategy_iteration/
+pre_event_combined/
+pre_event_new_names_combined/
+data/

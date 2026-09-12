@@ -1,0 +1,46 @@
+{
+  "date": "2026-09-10",
+  "purpose": "Diagnose observed midpoint gains, test partial spread execution and four strategy families with explicit adjustments",
+  "development": "2016-2021",
+  "later_comparison": "2022-2025; already examined elsewhere, not untouched holdout",
+  "partial_fill_fraction": [
+    0,
+    0.25,
+    0.5,
+    0.75,
+    1
+  ],
+  "definition": "0 midpoint, 1 adverse bid/ask; entry and exit fractions are independent; midpoint removes all modeled crossing cost, not half",
+  "primary_metric": "event-equal P&L / gross stock notional; untraded event allocations stay idle; also show premium normalized results without presenting them as account returns",
+  "families": {
+    "single_residual": {
+      "baseline": "current hybrid 20% threshold",
+      "adjustment": "5% threshold, signal midpoint >= 1, full signal spread <= 10% midpoint, hybrid and market-only directional agreement, gap covers full signal spread plus commissions"
+    },
+    "vertical_relative_value": {
+      "baseline": "one highest relative valuation-gap opposite-residual same-expiry same-type pair per event, gross premium gap > 5%",
+      "adjustment": "both legs pass signal liquidity and model-agreement checks; gap covers signal spread cost proxy"
+    },
+    "calendar_relative_value": {
+      "baseline": "one highest relative valuation-gap opposite-residual same-strike same-type pair per event, gross premium gap > 5%",
+      "adjustment": "both legs pass signal liquidity and model-agreement checks; gap covers signal spread cost proxy"
+    },
+    "historical_variance": {
+      "baseline": "ATM straddle long if historical variance > 1.25 * implied, short if implied > 1.25 * historical",
+      "adjustment": "signal spread <= 10%, premium >= 1, historical-final-anchored valuation agrees with side and exceeds estimated spread costs; reduce exposure according to prior-only worst earnings move"
+    }
+  },
+  "execution": "same delayed entries/exits as prior experiment; initial fixed stock hedge; compare no hedge; no fabricated passive fill probabilities",
+  "diagnosis": "side, event/year/name, option versus stock hedge, costs, spread, premium normalization, leave-best-events-out",
+  "no_live_orders": true,
+  "second_round": {
+    "hedges": "Compare vendor entry deltas and same reference-IV estimator refreshed at entry, after trade selection",
+    "short_only": "Earlier-period historical-variance longs lost while shorts gained; test adjusted short-only rule in later period",
+    "regime_filters": "Historical forecasts assume stable risk. Test fixed variance20/variance252 <= 1.5 and 60-session drawdown >= -20%, separately and combined; signal-time returns only; all results reported, no best filter chosen"
+  },
+  "continuation": {
+    "entry_limits": "Reject entry ask/bid unless it preserves 20% gap versus frozen signal valuation; then test additional liquidity/minimum-entry-premium restrictions",
+    "protection": "Short historical-variance straddles with nearest eligible wings at 5% or 10% of center strike; no stock hedge as primary. Preserve same core-straddle notional and match events before comparing risk. Retest signal-estimated cost budget <=25% credit.",
+    "pre_event": "Signal -10 sessions, enter -9, exit -6, options expire after earnings. Test 5/10/20% current-hybrid discrepancies, liquidity/cost gate and marketable-entry limits. Initial 2021-2024 panel expanded to 2016-2020 and 2025 without changing rules."
+  }
+}
