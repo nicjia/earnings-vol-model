@@ -9,9 +9,8 @@ jump log-return J is drawn from a K-component Gaussian mixture:
 
     f(x) = sum_i  w_i * Normal(x ; mu_i, s_i^2)
 
-Earnings almost never produce a ~0% move, so a single Normal centred at 0 is the
-worst possible shape (its peak sits on the least-likely outcome). A two-component
-mixture with humps near +-(expected move) is bimodal and captures beat/miss.
+Mixture components are a flexible distributional specification, not assumed
+beat/miss outcomes. A core-plus-tail mixture can be unimodal.
 
 Key property: because each component is Gaussian in log-space, its variance simply
 *adds* to the ongoing diffusion variance. So the price is a weighted sum of
@@ -68,7 +67,13 @@ class EarningsMixtureJump:
     """A K-component Gaussian mixture jump, drift-compensated so E[e^J] = 1."""
 
     def __init__(self, components: list[MixtureComponent]):
+        components = tuple(components)
+        if not components:
+            raise ValueError("At least one mixture component is required")
         w = np.array([c.weight for c in components], dtype=float)
+        if (not np.isfinite(w).all() or np.any(w < 0) or w.sum() <= 0
+                or any(not np.isfinite([c.mean, c.sd]).all() or c.sd < 0 for c in components)):
+            raise ValueError("Mixture weights and standard deviations must be valid and nonnegative")
         self.w = w / w.sum()
         self.m_raw = np.array([c.mean for c in components], dtype=float)
         self.s = np.array([c.sd for c in components], dtype=float)
@@ -104,7 +109,7 @@ class EarningsMixtureJump:
 # The pricer: mixture-of-Black-76 (closed form)
 # --------------------------------------------------------------------------- #
 def price_option(S0, K, T, r, q, sigma_diff, jump: EarningsMixtureJump | None,
-                 call=True):
+                 call=True, *, variance_time=None):
     """
     Price a European option under diffusion + one earnings mixture jump.
 
@@ -114,14 +119,21 @@ def price_option(S0, K, T, r, q, sigma_diff, jump: EarningsMixtureJump | None,
     r, q      risk-free, dividend yield (continuous)
     sigma_diff annualized *diffusive* vol (the non-event vol)
     jump      EarningsMixtureJump, or None for plain Black-Scholes
+    variance_time weighted years for diffusion only; defaults to calendar T.
+                  Carry and discounting always use calendar T.
     """
+    tv = T if variance_time is None else variance_time
+    if not np.isfinite([T, tv, sigma_diff]).all() or min(T, tv, sigma_diff) < 0:
+        raise ValueError("Times and diffusion volatility must be finite and nonnegative")
+    if T == 0:
+        return black76(S0, K, 0.0, 0.0, r, call)
     F = S0 * np.exp((r - q) * T)                      # pure forward
     if jump is None:
-        return black76(F, K, sigma_diff, T, r, call)
+        return black76(F, K, sigma_diff * np.sqrt(tv / T), T, r, call)
     total = np.zeros_like(np.asarray(K, dtype=float))
     for w_i, mu_i, s_i in zip(jump.w, jump.mu, jump.s):
         F_i = F * np.exp(mu_i + 0.5 * s_i ** 2)        # component forward (sum w_i F_i = F)
-        var_i = sigma_diff ** 2 * T + s_i ** 2         # diffusion + branch variance
+        var_i = sigma_diff ** 2 * tv + s_i ** 2        # diffusion + branch variance
         vol_i = np.sqrt(var_i / T)                     # annualized effective vol
         total = total + w_i * black76(F_i, K, vol_i, T, r, call)
     return total
@@ -131,13 +143,25 @@ def price_option(S0, K, T, r, q, sigma_diff, jump: EarningsMixtureJump | None,
 # Monte Carlo validator (independent of the closed form)
 # --------------------------------------------------------------------------- #
 def price_option_mc(S0, K, T, r, q, sigma_diff, jump: EarningsMixtureJump | None,
-                    call=True, n=2_000_000, seed=1):
+                    call=True, n=2_000_000, seed=1, *, variance_time=None,
+                    jumps=()):
+    tv = T if variance_time is None else variance_time
+    if not np.isfinite([T, tv, sigma_diff]).all() or min(T, tv, sigma_diff) < 0:
+        raise ValueError("Times and diffusion volatility must be finite and nonnegative")
+    if T == 0:
+        return float(black76(S0, K, 0, 0, r, call)), 0.0, 1.0
+    events = tuple(jumps)
+    if jump is not None:
+        if events:
+            raise ValueError("Supply jump or jumps, not both")
+        events = (jump,)
     rng = np.random.default_rng(seed)
     F = S0 * np.exp((r - q) * T)
     Z = rng.standard_normal(n)
-    logST = np.log(F) - 0.5 * sigma_diff ** 2 * T + sigma_diff * np.sqrt(T) * Z
-    if jump is not None:
-        logST = logST + jump.sample(n, rng)            # E[e^J]=1 keeps forward = F
+    logST = np.log(F) - 0.5 * sigma_diff ** 2 * tv + sigma_diff * np.sqrt(tv) * Z
+    if T > 0:
+        for event in events:
+            logST = logST + event.sample(n, rng)      # independent jumps, no tree
     ST = np.exp(logST)
     payoff = np.maximum(ST - K, 0.0) if call else np.maximum(K - ST, 0.0)
     disc = np.exp(-r * T)
