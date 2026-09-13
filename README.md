@@ -27,7 +27,7 @@ Errors are prices per underlying share. “Spot bp” means absolute error divid
 
 2020 is the development sample: 118,117 quotes on 1,068 snapshots across six names. The later historical sample has 23,650 quotes on 251 eligible snapshots across five names; the available database ends on August 29, 2025. The hybrid does **not** consistently beat simple interpolation. Its purpose is to retain structural event scenarios while anchoring current prices to observed markets.
 
-The full [project report](docs/PROJECT.md) covers pricing, event repricing, hedging, strategy outcomes and limitations. Aggregate numbers are in [final_metrics.json](docs/final_metrics.json).
+The [methods PDF](docs/methods.pdf) describes the model and numerical construction. The full [project report](docs/PROJECT.md) covers pricing, event repricing, hedging, strategy outcomes and limitations. Aggregate numbers are in [final_metrics.json](docs/final_metrics.json).
 
 ## Run an offline example
 
@@ -36,6 +36,8 @@ python -m pip install -r requirements-core.txt
 python demo_market_surface.py
 python demo_clock.py
 ```
+
+For automated checks and historical replication instructions, see the [reproduction guide](docs/REPRODUCING.md).
 
 Use Python 3.10 or newer. The first demo creates eight synthetic reference quotes and prices five withheld strikes. It requires no credentials, live prices or licensed data.
 

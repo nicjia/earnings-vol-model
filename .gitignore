@@ -35,3 +35,6 @@ data/
 .agents/
 .claude/
 .codex/
+
+# Published methods document
+!/docs/methods.pdf
