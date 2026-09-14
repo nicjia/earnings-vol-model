@@ -1,57 +1,53 @@
 # earnings-vol-model
 
-Pricing equity options with a **scheduled earnings jump** instead of one flat
-volatility, and then checking the jump against what stocks actually do on earnings
-days.
+Prices options with a schedule earnings jump instead of using a single falt volatility metric. 
 
-Earnings is the single largest predictable event in a stock's option surface:
-earnings days are only ~1.6% of trading days but carry a **median 18% of a stock's
-annual variance**. This project builds a pricing engine that treats that event as
-what it is — a dated jump on top of ordinary diffusion — and uses it to decompose
-implied vol, extract the market's implied earnings move, and forecast the things a
-single flat vol simply cannot.
+Earnings are the largest predictable event in a stock's option surface. They represent ~1.6% of trading days, but carry a median 18% of a stock's annual variance.
+This project builds a pricing engine that treats the earnings event as a dated jump on top of ordinary diffusion. Using this, we can forecast the market in a way normal volatility metrics cannot.
 
 ![earnings jump study](figures/earnings_study.png)
 
 ## What it does
 
-- **Prices European options as diffusion + a scheduled jump** that applies only to
-  expiries containing the earnings date. The jump is a Gaussian mixture and the
-  price is a closed-form weighted sum of Black-76 prices — no simulation.
-- **Adds Heston stochastic vol** for skew and prices the combination by the
-  Fourier-cosine (COS) method — a Bates-style model with a scheduled jump.
-- **Decomposes the ATM implied-vol term structure** into a diffusion line plus an
-  earnings step, and pulls the implied earnings move straight out of a live chain.
-- **Forecasts the post-earnings IV crush** and the tail of the realized move.
-- Prices **with or without reference option quotes** — supply calibrated
-  parameters and it stands alone as a structural model.
+- Prices European options as diffusion with a scheduled jump that applies only to
+  expiries taht contain the earnings date. The jump is a Gaussian mixture and the
+  price is a closed form weighted sum of Black-76 prices. This does not require Monte-Carlo Simulations, which can get computationally expensive.
+- Adds Heston stochastic volatility for skew and prices the combination by the
+  Fourier-cosine method which is a Bates-style model with a scheduled jump.
+- Decomposes the ATM implied-vol term structure into diffusion with an
+  earnings step, and pulls the implied earnings move from the live data.
+- Forecasts the post-earnings IV crush and the tail of the realized move.
+- Prices with or without reference option quotes, if calibrated parameters are provided, this can act as a standalone model
 
-Math and derivations are in [`docs/methods.tex`](docs/methods.tex).
+More specifics on the math and derivations are in [`docs/methods.pdf`](docs/methods.pdf).
+
+### Market Efficiency & Trading Frictions
+A core finding of this project is the difference between frictionless theoretical returns and executable reality. When trading the model's fair-value discrepancies purely at the midpoint, the strategy yields a **+26% return**. 
+
+This edge concentrates mostly in wide-quoted, illiquid options (where entry spreads averaged 81% of the midpoint). Break-even analysis shows that a taker strategy would need to consistently execute by crossing **less than 42.6% of the quoted bid-ask spread** to remain net-positive. However, securing fills inside the spread on illiquid chain data is structurally unlikely.
 
 ## What works
 
-**A self-consistent fair-value surface.** Calibrated to a handful of reference
-strikes, the engine reprices *held-out* strikes (across both calls and puts, all
-maturities) back inside the quoted bid–ask **~87–90% of the time**. That's a
-legitimate, arbitrage-aware pricing surface you can price a whole chain from.
+When the model is calibrated to a few reference strikes, the engine can prices held out strikes across all strikes and maturities within the quoted bid-ask 87-90% of the time.
+This shows the model's accuracy for reflecting the true state of the market. 
 
-**An identified vol decomposition.** The term structure splits cleanly into
+The term structure splits cleanly into
 diffusion, skew, and event components. Forward volatility is ~36% between every
-pair of expiries *except* the one straddling earnings, where it jumps to 48% — a
-clean, visible signature that one flat vol can't hold
+pair of expiries except the one straddling earnings, where it jumps to 48%, which is a signature that a singlular flat volatility cannot show
 (`figures/bs_vs_events.png`).
 
-**Forecasting that survives out-of-sample.** On strict temporal OOS tests:
+Forecasting that survives out-of-sample. On OOS tests:
 
 - **Move magnitude** is genuinely forecastable and beats a naive prior.
-- **Tail risk ranks cleanly** — sorting by implied vol, P(|move| > 10%) rises
+- **Tail risk ranks cleanly** and when sorting by implied vol, P(|move| > 10%) rises
   monotonically from **9% to 37%** across quintiles.
 - The **mechanical IV crush** after the announcement is predictable from the event
   decomposition.
 
 **A concrete risk result.** Adding protective wings to short-vol earnings
 positions roughly **halved the worst observed loss** and cut return variability by
-**62%** across 38 events — a usable, real hedging finding.
+**62%** across 38 events.
+
 
 ## Results
 
