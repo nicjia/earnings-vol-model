@@ -6,7 +6,7 @@ import pandas as pd
 from research2.historical_jump import build_history
 from research2.historical_jump_report import table
 ROOT=Path(__file__).resolve().parents[2]/'wrds_studies'
-OUT=ROOT/'strategy_iteration';OUT.mkdir(exist_ok=True)
+OUT=ROOT/'strategy_iteration'
 
 
 def enrich():
@@ -190,4 +190,5 @@ No robust executable edge is established. Partial-spread fills can preserve the 
     print(f.to_string(index=False));print(main[main.period.eq('later')][['family','version','entry_fraction','closed','events','all_event_bp','ci_low_bp','ci_high_bp']].to_string(index=False));print(dest)
 
 if __name__=='__main__':
+    OUT.mkdir(parents=True, exist_ok=True)
     c=enrich();print('enriched',len(c),flush=True);p=build_positions(c);print('positions',len(p),flush=True);analyze(c,p);report()
