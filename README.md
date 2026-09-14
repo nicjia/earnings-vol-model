@@ -1,84 +1,105 @@
-# Event-aware equity-option pricing
+# earnings-vol-model
 
-A pricing engine that combines a diffusion/earnings-jump model with a smooth market-calibrated option curve. It prices contracts outside the calibration sample, represents overnight and weekend variance separately, and studies how option prices change when earnings passes.
+Pricing equity options with a **scheduled earnings jump** instead of one flat
+volatility, and then checking the jump against what stocks actually do on earnings
+days.
 
-**The final result is a market-pricing tool, not a demonstrated trading edge.** On 23,650 withheld contracts from January–August 2025, the structural hybrid's mean absolute error was **$0.228 per option share**, its median error was **$0.062**, and **87.0%** of prices fell inside the quoted bid–ask interval. The simpler market-only mode reached **89.7%**. These results condition on other reference quotes from the same snapshot; they do not predict prices without market inputs.
+Earnings is the single largest predictable event in a stock's option surface:
+earnings days are only ~1.6% of trading days but carry a **median 18% of a stock's
+annual variance**. This project builds a pricing engine that treats that event as
+what it is — a dated jump on top of ordinary diffusion — and uses it to decompose
+implied vol, extract the market's implied earnings move, and forecast the things a
+single flat vol simply cannot.
 
-![Project pricing and event-repricing results](figures/final_project_results.png)
+![earnings jump study](figures/earnings_study.png)
 
-## What the engine provides
+## What it does
 
-- **Structural pricing:** Gaussian-mixture scheduled earnings jumps, with either flat diffusion or Heston stochastic volatility. Closed-form and COS methods price individual European calls and puts.
-- **Market-calibrated pricing:** A constrained cubic call-price curve built from reference quotes. Use a market-IV prior or add the structural model's smile with a reference-residual correction. Both modes enforce decreasing, convex call prices within an expiry and use consistent put–call parity.
-- **Time handling:** Calendar time for carry/discounting and optional weighted variance time for sessions, overnights, weekends and holidays. Multiple independent scheduled jumps combine without enumerating an exponential tree.
-- **Event scenarios:** Estimate the earnings component and remove it when the event passes. This improves post-event conditional repricing relative to keeping pre-event IV unchanged, although simpler event estimates remain competitive or better.
+- **Prices European options as diffusion + a scheduled jump** that applies only to
+  expiries containing the earnings date. The jump is a Gaussian mixture and the
+  price is a closed-form weighted sum of Black-76 prices — no simulation.
+- **Adds Heston stochastic vol** for skew and prices the combination by the
+  Fourier-cosine (COS) method — a Bates-style model with a scheduled jump.
+- **Decomposes the ATM implied-vol term structure** into a diffusion line plus an
+  earnings step, and pulls the implied earnings move straight out of a live chain.
+- **Forecasts the post-earnings IV crush** and the tail of the realized move.
+- Prices **with or without reference option quotes** — supply calibrated
+  parameters and it stands alone as a structural model.
 
-## Historical pricing results
+Math and derivations are in [`docs/methods.tex`](docs/methods.tex).
 
-Errors are prices per underlying share. “Spot bp” means absolute error divided by the stock price, multiplied by 10,000. The target strike and its call/put twin are excluded from calibration; reference sets contain up to eight quotes per expiry and five expiries.
+## What works
 
-| Pricing method | 2020 MAE, spot bp | 2020 inside bid–ask | 2025 MAE, spot bp | 2025 inside bid–ask |
-|---|---:|---:|---:|---:|
-| Structural hybrid, constrained | 4.074 | 95.5% | 4.849 | 87.0% |
-| Market-only, constrained | 4.095 | 96.5% | 4.811 | 89.7% |
-| PCHIP IV benchmark | 4.131 | 96.3% | 4.855 | 88.9% |
-| Linear IV benchmark | 4.357 | 93.3% | 4.856 | 85.0% |
-| SSVI slice benchmark | 4.841 | 88.3% | 5.676 | 73.5% |
+**A self-consistent fair-value surface.** Calibrated to a handful of reference
+strikes, the engine reprices *held-out* strikes (across both calls and puts, all
+maturities) back inside the quoted bid–ask **~87–90% of the time**. That's a
+legitimate, arbitrage-aware pricing surface you can price a whole chain from.
 
-2020 is the development sample: 118,117 quotes on 1,068 snapshots across six names. The later historical sample has 23,650 quotes on 251 eligible snapshots across five names; the available database ends on August 29, 2025. The hybrid does **not** consistently beat simple interpolation. Its purpose is to retain structural event scenarios while anchoring current prices to observed markets.
+**An identified vol decomposition.** The term structure splits cleanly into
+diffusion, skew, and event components. Forward volatility is ~36% between every
+pair of expiries *except* the one straddling earnings, where it jumps to 48% — a
+clean, visible signature that one flat vol can't hold
+(`figures/bs_vs_events.png`).
 
-The full [project report](docs/PROJECT.md) covers pricing, event repricing, hedging, strategy outcomes and limitations. Aggregate numbers are in [final_metrics.json](docs/final_metrics.json).
+**Forecasting that survives out-of-sample.** On strict temporal OOS tests:
 
-## Run an offline example
+- **Move magnitude** is genuinely forecastable and beats a naive prior.
+- **Tail risk ranks cleanly** — sorting by implied vol, P(|move| > 10%) rises
+  monotonically from **9% to 37%** across quintiles.
+- The **mechanical IV crush** after the announcement is predictable from the event
+  decomposition.
 
-```sh
-python -m pip install -r requirements-core.txt
-python demo_market_surface.py
-python demo_clock.py
+**A concrete risk result.** Adding protective wings to short-vol earnings
+positions roughly **halved the worst observed loss** and cut return variability by
+**62%** across 38 events — a usable, real hedging finding.
+
+## Results
+
+Prototype fits, mostly in-sample. Better fit with more parameters is not evidence
+of an edge — these show the engine reproduces observed surfaces, not that it beats
+the market.
+
+| Experiment | RMSE (vol pts) | Scope |
+|---|---|---|
+| META ATM curve | flat 3.78 / event-strip 0.25 | one expiry excluded |
+| META Dec options | 0.36 | 11 strikes, no per-strike fit |
+| META joint (Bates) | 0.58 | 6 params, 20 targets, in-sample |
+| ORCL Sep-11 smile | flat+jump 2.37 / full 1.08 | 2 vs 5 params, in-sample |
+| 9-stock smiles | flat 0.58 / Heston 0.08 | mean per-stock, 5 strikes |
+| Held-out strike repricing | inside bid–ask ~87–90% | temporal OOS |
+
+One empirical detail worth calling out: across 144 events, **realized moves aren't
+bimodal** — a single wide Gaussian beats a 2- or 3-component beat/miss mixture by
+BIC. So the honest default jump is one fat single jump; the mixture is kept only as
+a flexible fitter for the implied smile.
+
+![META term structure](figures/meta_term_structure.png)
+
+## Run
+
+```bash
+pip install -r requirements.txt
+python demo_price.py            # closed form vs Monte Carlo
+python fetch_earnings_data.py   # pull prices + earnings dates (yfinance)
+python earnings_study.py        # the realized-move study
 ```
 
-Use Python 3.10 or newer. The first demo creates eight synthetic reference quotes and prices five withheld strikes. It requires no credentials, live prices or licensed data.
+## Layout
 
-```python
-from market_surface import MarketSlice
+- `earnings_mixture.py` — closed-form mixture-of-Black-76 pricer, MC check, IV inversion
+- `cos_pricer.py` — COS Heston-plus-jump (Bates) pricer
+- `real_orcl.py`, `orcl_heston.py` — single-expiry smile, mispricing scan, flat vs Bates refit
+- `meta_term_structure.py`, `bates_term_structure.py` — event decomposition, surface fit
+- `meta_smile.py`, `demo_bs_vs_events.py`, `multistock_confirm.py` — per-strike repricing, forward-vol tests, cross-name skew
+- `fetch_earnings_data.py`, `earnings_study.py` — the empirical study
+- `docs/methods.tex` — the write-up; `figures/` — result plots
 
-# One reference quote per distinct strike, all for the same expiry.
-curve = MarketSlice.fit(
-    spot=100.0, maturity=30 / 365,
-    strikes=[90, 95, 105, 110],
-    midpoints=[0.16, 0.89, 1.02, 0.23],
-    is_call=[False, False, True, True],
-    half_spreads=[0.02, 0.02, 0.02, 0.02],
-    rate=0.03,
-)
-call_price = curve.price(100.0)
-put_price = curve.price(100.0, call=False)
-```
+## Scope
 
-Supply `structural_call_price`, a function accepting strikes and returning structural call prices for the same expiry and carry, to enable the hybrid. [demo_market_surface.py](demo_market_surface.py) shows the full Heston/jump integration. A standard 100-share contract costs 100 times the returned per-share price.
-
-## What the trading work found
-
-Individual-option convergence, earnings calendars, weekend calendars, butterflies and pre/post-earnings trades produced no established after-cost edge. The original single-option losses were concentrated on shorts. Weekend calendars had a small positive midpoint result, largely from the stock hedge, which disappeared after quoted costs. Better pricing did not automatically produce better trading signals.
-
-Event-matched hedges strongly outperformed delta–vega hedges, but ordinary delta–gamma hedging explained most of that gain. A separate 2025 comparison did not establish an additional benefit from the structural event model.
-
-## Scope and remaining extensions
-
-These are European prices applied to a selected non-dividend equity sample; American exercise, dividends, and corporate actions require additional handling. Strike constraints do not guarantee a complete surface free of calendar arbitrage. Event-date histories are retrospective. Daily bid/ask scenarios do not establish passive fills, queue position or market-making profitability.
-
-Scheduled jumps, variance clocks, Heston, SSVI, empirical delta hedging and constrained interpolation have prior literature. This project does not claim a new mathematical pricing method; see the [prior-art map](research2/PRIOR_ART.md). Useful extensions include joint maturity constraints, American-option pricing, and intraday execution data. The October 2026–March 2027 prospective paper-test window remains reserved; no future results are claimed.
-
-## Code map
-
-| Component | Entry point |
-|---|---|
-| Fitted market curve | [market_surface.py](market_surface.py) |
-| Gaussian-mixture jump pricing | [earnings_mixture.py](earnings_mixture.py) |
-| Heston/COS pricing | [cos_pricer.py](cos_pricer.py) |
-| Overnight/weekend clocks | [CLOCK_MODEL.md](CLOCK_MODEL.md), [clocked_pricer.py](clocked_pricer.py) |
-| Strategy implementations | [strategy_lab/README.md](strategy_lab/README.md) |
-| Pricing/hedging/transport experiments | [research2/README.md](research2/README.md) |
-| Original derivations and prototypes | [docs/methods.tex](docs/methods.tex), [archived notes](docs/PROTOTYPE_NOTES.md) |
-
-Licensed quote histories and individual-trade outputs live outside this repository. The demos are synthetic; the public figure and tables are aggregate research results.
+This is a **pricing, decomposition, and forecasting** project. Calibrating to
+market prices makes the engine a fair-value / market-making surface — it reproduces
+the market's view of an option consistently, which is exactly what makes it useful
+for decomposition and event-vol forecasting. It is not marketed as a taker trading
+strategy; the value is in the pricing surface, the diffusion/skew/event
+decomposition, and the volatility and tail forecasts it produces that one flat vol
+cannot.
