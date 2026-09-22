@@ -1,105 +1,48 @@
-# earnings-vol-model
+# Earnings volatility model
 
-Prices options with a schedule earnings jump instead of using a single falt volatility metric. 
-
-Earnings are the largest predictable event in a stock's option surface. They represent ~1.6% of trading days, but carry a median 18% of a stock's annual variance.
-This project builds a pricing engine that treats the earnings event as a dated jump on top of ordinary diffusion. Using this, we can forecast the market in a way normal volatility metrics cannot.
-
-![earnings jump study](figures/earnings_study.png)
-
-## What it does
-
-- Prices European options as diffusion with a scheduled jump that applies only to
-  expiries taht contain the earnings date. The jump is a Gaussian mixture and the
-  price is a closed form weighted sum of Black-76 prices. This does not require Monte-Carlo Simulations, which can get computationally expensive.
-- Adds Heston stochastic volatility for skew and prices the combination by the
-  Fourier-cosine method which is a Bates-style model with a scheduled jump.
-- Decomposes the ATM implied-vol term structure into diffusion with an
-  earnings step, and pulls the implied earnings move from the live data.
-- Forecasts the post-earnings IV crush and the tail of the realized move.
-- Prices with or without reference option quotes, if calibrated parameters are provided, this can act as a standalone model
-
-More specifics on the math and derivations are in [`docs/methods.pdf`](docs/methods.pdf).
-
-### Market Efficiency & Trading Frictions
-A core finding of this project is the difference between frictionless theoretical returns and executable reality. When trading the model's fair-value discrepancies purely at the midpoint, the strategy yields a **+26% return**. 
-
-This edge concentrates mostly in wide-quoted, illiquid options (where entry spreads averaged 81% of the midpoint). Break-even analysis shows that a taker strategy would need to consistently execute by crossing **less than 42.6% of the quoted bid-ask spread** to remain net-positive. However, securing fills inside the spread on illiquid chain data is structurally unlikely.
-
-## What works
-
-When the model is calibrated to a few reference strikes, the engine can prices held out strikes across all strikes and maturities within the quoted bid-ask 87-90% of the time.
-This shows the model's accuracy for reflecting the true state of the market. 
-
-The term structure splits cleanly into
-diffusion, skew, and event components. Forward volatility is ~36% between every
-pair of expiries except the one straddling earnings, where it jumps to 48%, which is a signature that a singlular flat volatility cannot show
-(`figures/bs_vs_events.png`).
-
-Forecasting that survives out-of-sample. On OOS tests:
-
-- **Move magnitude** is genuinely forecastable and beats a naive prior.
-- **Tail risk ranks cleanly** and when sorting by implied vol, P(|move| > 10%) rises
-  monotonically from **9% to 37%** across quintiles.
-- The **mechanical IV crush** after the announcement is predictable from the event
-  decomposition.
-
-**A concrete risk result.** Adding protective wings to short-vol earnings
-positions roughly **halved the worst observed loss** and cut return variability by
-**62%** across 38 events.
-
+European option pricing with Heston stochastic volatility, scheduled earnings jumps, and a constrained surface fitted to reference quotes. The strongest result is pricing held-out strikes accurately; the trading experiments did not establish a robust after-cost edge.
 
 ## Results
 
-Prototype fits, mostly in-sample. Better fit with more parameters is not evidence
-of an edge — these show the engine reproduces observed surfaces, not that it beats
-the market.
-
-| Experiment | RMSE (vol pts) | Scope |
+| Experiment | Result | Definition and evidence |
 |---|---|---|
-| META ATM curve | flat 3.78 / event-strip 0.25 | one expiry excluded |
-| META Dec options | 0.36 | 11 strikes, no per-strike fit |
-| META joint (Bates) | 0.58 | 6 params, 20 targets, in-sample |
-| ORCL Sep-11 smile | flat+jump 2.37 / full 1.08 | 2 vs 5 params, in-sample |
-| 9-stock smiles | flat 0.58 / Heston 0.08 | mean per-stock, 5 strikes |
-| Held-out strike repricing | inside bid–ask ~87–90% | temporal OOS |
+| Held-out pricing, 2020 | **4.07 spot-bp MAE; 95.5% inside bid–ask** | 118,117 target quotes; [pricing report](docs/PROJECT.md#pricing-results) and [metrics](docs/final_metrics.json) |
+| Historical confirmation, 2025 | **87.0% inside bid–ask; 4.85 spot-bp MAE** | 23,650 target quotes; same reference-quote protocol; [pricing report](docs/PROJECT.md#pricing-results) |
+| Scheduled-jump ablation | **27% lower MAE than jump-free Heston** | 21.54 → 15.80 spot bp on the 2020 sample; [eight-way ablation](docs/structural_ablation.json) |
+| Conditional earnings repricing | **69% lower MAE than unchanged strike IV** | 72.24 → 22.10 spot bp across 14 later-year events, supplying observed later stock prices; [comparison](docs/PROJECT.md#repricing-through-earnings) |
+| Protective wings | **62% lower P&L dispersion; roughly half the worst observed loss** | 38 matched events at equal core-straddle stock-notional exposure; [risk comparison](docs/ITERATION_RESULTS.md#protective-wings-matched-risk-comparison) |
 
-One empirical detail worth calling out: across 144 events, **realized moves aren't
-bimodal** — a single wide Gaussian beats a 2- or 3-component beat/miss mixture by
-BIC. So the honest default jump is one fat single jump; the mixture is kept only as
-a flexible fitter for the implied smile.
+Target strikes and their put/call parity twins are withheld from calibration. The pricing tests cover **141,767 quotes** across the two years, with 2020 used for development. The hybrid is competitive with market interpolation, not consistently better: the market-only surface put 96.5% and 89.7% inside bid–ask in the respective samples. A simpler two-expiry estimate also beat the structural conditional-repricing adjustment.
 
-![META term structure](figures/meta_term_structure.png)
+### Trading attribution
+
+The 156-position, 37-event experiment produced a +25.99% event-average premium-normalized return under simulated midpoint fills, including a stock hedge. Removing two events changes it to −14.4%; refreshing the entry hedge changes it to −4.67%; full quoted crossing gives −34.96%. These are separate sensitivity checks on the original experiment, not account returns.
+
+The arithmetic break-even is 42.6% of full modeled crossing cost. It is not evidence that those fills are attainable. The contribution is the option/hedge/cost attribution and risk analysis, rather than a demonstrated profitable strategy. See [trading results](docs/ITERATION_RESULTS.md) and [experiment definitions](docs/RESULTS.md).
 
 ## Run
 
 ```bash
-pip install -r requirements.txt
-python demo_price.py            # closed form vs Monte Carlo
-python fetch_earnings_data.py   # pull prices + earnings dates (yfinance)
-python earnings_study.py        # the realized-move study
+python -m pip install -r requirements.txt
+python demo_market_surface.py  # offline constrained-surface example
+python demo_price.py           # closed-form pricing vs Monte Carlo
+python demo_clock.py           # session/closure variance clock
 ```
 
-## Layout
+Run the correctness tests with:
 
-- `earnings_mixture.py` — closed-form mixture-of-Black-76 pricer, MC check, IV inversion
-- `cos_pricer.py` — COS Heston-plus-jump (Bates) pricer
-- `real_orcl.py`, `orcl_heston.py` — single-expiry smile, mispricing scan, flat vs Bates refit
-- `meta_term_structure.py`, `bates_term_structure.py` — event decomposition, surface fit
-- `meta_smile.py`, `demo_bs_vs_events.py`, `multistock_confirm.py` — per-strike repricing, forward-vol tests, cross-name skew
-- `fetch_earnings_data.py`, `earnings_study.py` — the empirical study
-- `docs/methods.tex` — the write-up; `figures/` — result plots
+```bash
+python -m pip install -r requirements-test.txt
+python -m unittest test_trade_screen test_market_surface test_variance_clock research2.test_research research2.test_historical_jump research2.test_iteration strategy_lab.test_lab strategy_lab.test_ablation
+```
 
-## Scope
+Historical studies require licensed quote data that are not distributed here. The offline demos and tests use generated inputs; they do not reproduce the historical panel.
 
-This is a **pricing, decomposition, and forecasting** project. Calibrating to
-market prices makes the engine a fair-value / market-making surface — it reproduces
-the market's view of an option consistently, which is exactly what makes it useful
-for decomposition and event-vol forecasting. It is not marketed as a taker trading
-strategy; the value is in the pricing surface, the diffusion/skew/event
-decomposition, and the volatility and tail forecasts it produces that one flat vol
-cannot.
+## Model
 
-## Result definitions
+- Flat diffusion with a scheduled Gaussian-mixture jump has a weighted Black-76 price. Jumps apply only to expiries that contain the earnings date.
+- Heston diffusion and independent scheduled jumps combine through characteristic functions and Fourier-cosine pricing, without enumerating jump-outcome combinations.
+- An optional variance clock separates exchange sessions, overnight closures, weekends and holidays. Physical-return clock weights did not improve risk-neutral pricing: the wider calibration gave 14.91 versus 14.06 spot bp for calendar time.
+- Reference quotes correct the structural smile; a constrained call-price curve enforces decreasing, convex prices within each expiry. This does not eliminate cross-expiry arbitrage.
 
-The [experiment reference](docs/RESULTS.md) maps the pricing, event-repricing, simulated-return, and protective-wing figures to their samples and source artifacts.
+The [project report](docs/PROJECT.md) gives samples, baselines and limitations. The [methods PDF](docs/methods.pdf) covers the pricing mathematics. Core implementations are in `earnings_mixture.py`, `cos_pricer.py`, `variance_clock.py` and `market_surface.py`.

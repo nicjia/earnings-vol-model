@@ -5,6 +5,8 @@ These results come from different experiments and normalizations. They should no
 | Result | Sample and definition | Source |
 |---|---|---|
 | 141,767 withheld option quotes | 118,117 in 2020 and 23,650 in 2025; target strikes and parity twins excluded from fitting | [Pricing metrics](final_metrics.json), [project report](PROJECT.md) |
+| Held-out pricing accuracy | 2020: 4.074 spot-bp MAE, 95.5% inside bid–ask; 2025: 4.849 spot-bp, 87.0%. Reference-conditioned hybrid; market-only coverage is 96.5% and 89.7%, respectively | [Pricing metrics](final_metrics.json), [pricing protocol](PROJECT.md#pricing-results) |
+| Session-aware pricing engine | Exchange sessions and closure categories; independent scheduled jumps composed through characteristic functions. Eight-way structural ablation; no claim that physical-return clock weights improved pricing | [Model and clock](PROJECT.md#what-was-built), [ablation](structural_ablation.json) |
 | 27% lower structural pricing error | Calendar Heston MAE falls from 21.5433 to 15.8016 spot bp with scheduled jumps: 26.65%, rounded; 2020 development sample only | [Structural ablation](structural_ablation.json), `strategy_lab/ablation.py` |
 | 69% lower conditional repricing error | 2025 equal-event MAE falls from 72.236 to 22.099 spot bp against unchanged strike IV; 14 events, observed later stock price supplied | [Pricing metrics](final_metrics.json), [project report](PROJECT.md#repricing-through-earnings) |
 | 25.99% event-average premium-normalized return | 156 positions, 37 earnings events; original signal-date stock hedge, simulated midpoint fills, commissions and stock costs | [Trading iterations](ITERATION_RESULTS.md) |
