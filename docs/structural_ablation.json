@@ -1,0 +1,138 @@
+{
+  "sample": "2020 development; 118117 withheld quotes",
+  "source": "strategy_lab.ablation; pricing_summary.csv",
+  "results": [
+    {
+      "variant": "calendar_flat_no_jump",
+      "n": 118117.0,
+      "mae_bp": 31.063407955820463,
+      "equal_snapshot_mae_bp": 31.885401593754914,
+      "bias_bp": -5.744014498727952,
+      "within_bidask_pct": 32.88942319903147,
+      "convergence_pct": 100.0,
+      "any_bound_pct": 0.0,
+      "numerical_pass_pct": 100.0,
+      "grid_failure_pct": null
+    },
+    {
+      "variant": "calendar_flat_jump",
+      "n": 118117.0,
+      "mae_bp": 26.336825866458426,
+      "equal_snapshot_mae_bp": 27.17919238275404,
+      "bias_bp": -4.6600570996983315,
+      "within_bidask_pct": 39.15609099452238,
+      "convergence_pct": 100.0,
+      "any_bound_pct": 13.389513108614231,
+      "numerical_pass_pct": 100.0,
+      "grid_failure_pct": null
+    },
+    {
+      "variant": "calendar_heston_no_jump",
+      "n": 118117.0,
+      "mae_bp": 21.543269850733676,
+      "equal_snapshot_mae_bp": 22.08321638538953,
+      "bias_bp": -3.2612125672611008,
+      "within_bidask_pct": 48.830396979266325,
+      "convergence_pct": 100.0,
+      "any_bound_pct": 34.176029962546814,
+      "numerical_pass_pct": 100.0,
+      "grid_failure_pct": null
+    },
+    {
+      "variant": "calendar_heston_jump",
+      "n": 118117.0,
+      "mae_bp": 15.801555676168414,
+      "equal_snapshot_mae_bp": 16.333552095644723,
+      "bias_bp": -2.019754511274674,
+      "within_bidask_pct": 60.05655409466885,
+      "convergence_pct": 100.0,
+      "any_bound_pct": 28.932584269662918,
+      "numerical_pass_pct": 100.0,
+      "grid_failure_pct": null
+    },
+    {
+      "variant": "physical_flat_no_jump",
+      "n": 118117.0,
+      "mae_bp": 31.614431400898013,
+      "equal_snapshot_mae_bp": 32.38790361861632,
+      "bias_bp": -6.910835757181145,
+      "within_bidask_pct": 32.91820821727609,
+      "convergence_pct": 100.0,
+      "any_bound_pct": 1.4044943820224718,
+      "numerical_pass_pct": 100.0,
+      "grid_failure_pct": null
+    },
+    {
+      "variant": "physical_flat_jump",
+      "n": 118117.0,
+      "mae_bp": 26.842973790698547,
+      "equal_snapshot_mae_bp": 27.629900829479364,
+      "bias_bp": -5.612450940463933,
+      "within_bidask_pct": 39.03841106699289,
+      "convergence_pct": 100.0,
+      "any_bound_pct": 12.921348314606742,
+      "numerical_pass_pct": 100.0,
+      "grid_failure_pct": null
+    },
+    {
+      "variant": "physical_heston_no_jump",
+      "n": 118117.0,
+      "mae_bp": 24.41819331572489,
+      "equal_snapshot_mae_bp": 25.058523283520007,
+      "bias_bp": -4.842125486634324,
+      "within_bidask_pct": 43.965728895925224,
+      "convergence_pct": 100.0,
+      "any_bound_pct": 85.86142322097379,
+      "numerical_pass_pct": 100.0,
+      "grid_failure_pct": null
+    },
+    {
+      "variant": "physical_heston_jump",
+      "n": 118117.0,
+      "mae_bp": 18.63581802570573,
+      "equal_snapshot_mae_bp": 19.30483023167066,
+      "bias_bp": -3.61967201735407,
+      "within_bidask_pct": 54.56877502815005,
+      "convergence_pct": 100.0,
+      "any_bound_pct": 88.57677902621724,
+      "numerical_pass_pct": 100.0,
+      "grid_failure_pct": null
+    },
+    {
+      "variant": "physical_hybrid",
+      "n": 118117.0,
+      "mae_bp": 4.147916432240512,
+      "equal_snapshot_mae_bp": 4.418104364295192,
+      "bias_bp": 0.3132797322648963,
+      "within_bidask_pct": 94.29633329664655,
+      "convergence_pct": null,
+      "any_bound_pct": null,
+      "numerical_pass_pct": null,
+      "grid_failure_pct": 34.825777444735856
+    },
+    {
+      "variant": "calendar_hybrid",
+      "n": 118117.0,
+      "mae_bp": 4.034506804811195,
+      "equal_snapshot_mae_bp": 4.29730256201248,
+      "bias_bp": 0.11073624815815351,
+      "within_bidask_pct": 94.97786093449714,
+      "convergence_pct": null,
+      "any_bound_pct": null,
+      "numerical_pass_pct": null,
+      "grid_failure_pct": 44.67965530161109
+    },
+    {
+      "variant": "interpolation",
+      "n": 118117.0,
+      "mae_bp": 4.356603488155423,
+      "equal_snapshot_mae_bp": 4.623933334578054,
+      "bias_bp": 0.52309378924519,
+      "within_bidask_pct": 93.33203518545172,
+      "convergence_pct": null,
+      "any_bound_pct": null,
+      "numerical_pass_pct": null,
+      "grid_failure_pct": 34.1701011614837
+    }
+  ]
+}

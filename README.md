@@ -99,3 +99,7 @@ for decomposition and event-vol forecasting. It is not marketed as a taker tradi
 strategy; the value is in the pricing surface, the diffusion/skew/event
 decomposition, and the volatility and tail forecasts it produces that one flat vol
 cannot.
+
+## Result definitions
+
+The [experiment reference](docs/RESULTS.md) maps the pricing, event-repricing, simulated-return, and protective-wing figures to their samples and source artifacts.
