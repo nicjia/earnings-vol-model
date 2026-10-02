@@ -30,10 +30,10 @@ def line(name, s):
 HEAD = '| Group | Events | Mean (mid) | 95% weekly bootstrap | Mean 25% cost | Excl. best 5 | Win rate |\n|---|---|---|---|---|---|---|'
 
 
-def build(results):
+def build(results, title='Research5 post-freeze diagnostics'):
     frozen = json.load(open(os.path.join(results, 'frozen_policies.json')))
     records = {s: load(results, s) for s in ('A', 'B', 'C', 'D')}
-    lines = ['# Research5 post-freeze diagnostics', '',
+    lines = ['# ' + title, '',
              'Exploratory breakdowns of the five frozen policies after all stages were evaluated. None of these '
              'groupings was pre-registered as a gate, and none can change the frozen set or the verdict.', '']
     for policy in frozen['policies']:
@@ -75,9 +75,10 @@ def build(results):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--results', default='../wrds_studies/research5_results')
+    parser.add_argument('--title', default='Research5 post-freeze diagnostics')
     args = parser.parse_args()
     out = os.path.join(args.results, 'DIAGNOSTICS.md')
-    text = build(args.results)
+    text = build(args.results, args.title)
     with open(out, 'x') as stream:
         stream.write(text)
     print(text)

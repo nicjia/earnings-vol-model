@@ -35,10 +35,10 @@ HEADER = ('| Sample | Events | Issuers | Mean (mid) | 95% weekly bootstrap | Mea
           'Excl. best 5 | Win rate | Worst |\n|---|---|---|---|---|---|---|---|---|---|')
 
 
-def build(results):
+def build(results, title='Research5: autonomous earnings-options strategy study'):
     frozen = json.load(open(os.path.join(results, 'frozen_policies.json')))
     ev = json.load(open(os.path.join(results, 'evaluation.json')))
-    lines = ['# Research5: autonomous earnings-options strategy study', '',
+    lines = ['# ' + title, '',
              f"Frozen {frozen['frozen_at']} on sample A; evaluated {ev['evaluated_at']}. "
              f"Protocol sha256 `{frozen['protocol_sha256'][:16]}`, grid sha256 `{frozen['grid_sha256'][:16]}`.", '',
              'Returns are equal-risk event returns on max-loss risk (debit for long premium and calendars), closing midpoint '
@@ -91,7 +91,7 @@ def build(results):
     tables = {'A': read_csv(os.path.join(results, 'candidates_A.csv'))}
     for s in ('B', 'C', 'D'):
         tables[s] = read_csv(os.path.join(results, f'diagnostic_candidates_{s}.csv'))
-    lines += ['## Post-freeze diagnostics (all 1,224 candidates; cannot change the frozen set)', '',
+    lines += [f"## Post-freeze diagnostics (all {frozen['candidates']:,} candidates; cannot change the frozen set)", '',
               '| Sample | Candidates with >=100 events | Mean > 0 | Normal lower bound > 0 | Mean 25% cost > 0 |',
               '|---|---|---|---|---|']
     for s, rows in tables.items():
@@ -132,8 +132,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--results', default='../wrds_studies/research5_results')
     parser.add_argument('--output')
+    parser.add_argument('--title', default='Research5: autonomous earnings-options strategy study')
     args = parser.parse_args()
-    text = build(args.results)
+    text = build(args.results, args.title)
     out = args.output or os.path.join(args.results, 'REPORT.md')
     with open(out, 'x') as stream:
         stream.write(text)

@@ -1,0 +1,128 @@
+{
+  "frozen_at": "2026-10-02T20:09:41.456331+00:00",
+  "protocol_sha256": "4cb88313dc11761b27ce950b4b6bc610dd633096bf66eb444a77c370c2570eca",
+  "grid_sha256": "b60d4baad434f3f6b531f46f5ecb28035cd63ea39d0ccb681a60f8c7d7473fe6",
+  "candidates": 894,
+  "eligible": 75,
+  "policies": [
+    {
+      "id": "atm_put_calendar|E-1->hold_front|R>=1.2|tight",
+      "family": "atm_put_calendar",
+      "entry": "E-1",
+      "exit": "hold_front",
+      "filter": "R>=1.2",
+      "liquidity": "tight",
+      "selection": {
+        "events": 317,
+        "issuers": 80,
+        "weeks": 130,
+        "mean": 0.18394629298895368,
+        "ci_low_normal": 0.06031849872412924,
+        "mean_c25": 0.07094838282666821,
+        "mean_c50": -0.04204952733561714,
+        "without_best5": 0.11746659731838809,
+        "win_rate": 0.4952681388012618,
+        "unresolved_share": 0.0
+      },
+      "max_t_p": 0.062
+    },
+    {
+      "id": "atm_straddle_calendar|E-1->hold_front|R>=1.2|tight",
+      "family": "atm_straddle_calendar",
+      "entry": "E-1",
+      "exit": "hold_front",
+      "filter": "R>=1.2",
+      "liquidity": "tight",
+      "selection": {
+        "events": 339,
+        "issuers": 84,
+        "weeks": 137,
+        "mean": 0.16895342635303157,
+        "ci_low_normal": 0.054259106101450794,
+        "mean_c25": 0.052663552653039465,
+        "mean_c50": -0.06362632104695269,
+        "without_best5": 0.11705772096904957,
+        "win_rate": 0.4749262536873156,
+        "unresolved_share": 0.0
+      },
+      "max_t_p": 0.062
+    },
+    {
+      "id": "double_diagonal_put|E-1->after_release|R>=1.2|tight",
+      "family": "double_diagonal_put",
+      "entry": "E-1",
+      "exit": "after_release",
+      "filter": "R>=1.2",
+      "liquidity": "tight",
+      "selection": {
+        "events": 187,
+        "issuers": 57,
+        "weeks": 102,
+        "mean": 0.10923492335775271,
+        "ci_low_normal": 0.04699091449232589,
+        "mean_c25": 0.06435165161185517,
+        "mean_c50": 0.019468379865957623,
+        "without_best5": 0.0824163937903225,
+        "win_rate": 0.6631016042780749,
+        "unresolved_share": 0.0
+      },
+      "max_t_p": 0.024
+    },
+    {
+      "id": "atm_call_calendar|E-1->hold_front|R>=1.2|tight",
+      "family": "atm_call_calendar",
+      "entry": "E-1",
+      "exit": "hold_front",
+      "filter": "R>=1.2",
+      "liquidity": "tight",
+      "selection": {
+        "events": 352,
+        "issuers": 85,
+        "weeks": 135,
+        "mean": 0.14600070604359613,
+        "ci_low_normal": 0.04529269958040619,
+        "mean_c25": 0.031111302799367354,
+        "mean_c50": -0.08377810044486153,
+        "without_best5": 0.09901969192978764,
+        "win_rate": 0.4744318181818182,
+        "unresolved_share": 0.0
+      },
+      "max_t_p": 0.068
+    },
+    {
+      "id": "double_calendar_straddle_2w|E-2->hold_front|TSw>=1.3|standard",
+      "family": "double_calendar_straddle_2w",
+      "entry": "E-2",
+      "exit": "hold_front",
+      "filter": "TSw>=1.3",
+      "liquidity": "standard",
+      "selection": {
+        "events": 360,
+        "issuers": 83,
+        "weeks": 135,
+        "mean": 0.10466528402546338,
+        "ci_low_normal": 0.03357560196474217,
+        "mean_c25": 0.041088030059988956,
+        "mean_c50": -0.022489223905485207,
+        "without_best5": 0.07485624191693692,
+        "win_rate": 0.5111111111111111,
+        "unresolved_share": 0.008241758241758242
+      },
+      "max_t_p": 0.062
+    }
+  ],
+  "records_A_sha256": "0e44a6253ebedfb007832efcdd34ec2ea99c5aa0f2f6e51e1bfbdc7fd2edd2e0",
+  "source_hashes": {
+    "research6/protocol.json": "4cb88313dc11761b27ce950b4b6bc610dd633096bf66eb444a77c370c2570eca",
+    "research6/engine.py": "1a623e7de9c54d04c2cd77d6b5370d06e84787299275886b52ae25cb813103a7",
+    "research6/candidates.py": "38f74bb74f8a91ccc3d124f6e25da93365403d6d3792b018b9741cedeaee4140",
+    "research6/run.py": "d06af5e635a85a5ba14eeef1d7db63611b6d64cd2201a5c422b7897f44df792a",
+    "research5/protocol.json": "ee89673b6c02f7a55aea45fb632e14e37cb10ea49fa54abcb1a1984d28331b8b",
+    "research5/pickle_compat.py": "ca64dfec3977f9c9e6dac8e4efc0ced44377324a74cb69aae6d7cf15d497d5d9",
+    "research5/data.py": "a96a472cee150c99abb390beda46f8f1bbdd12e5da934082a30f652cf7a66aab",
+    "research5/engine.py": "7c51138ba15713e953439f9f64a8ccb45fb7c8e849b923faff8dc0846352ec4f",
+    "research5/stats.py": "2438890a3746419a79ae989c74da2a2e7db49ee95f74ff0996ae9e32e0beb43d",
+    "research5/candidates.py": "143bcabedc6e7f15d2afd25c06eec7790c8604338a4fb3a8478227361ee57742",
+    "research5/run.py": "dc69d3e6dab97322b5c1a159855aaad25d9e14acb08b1f57be1ed40d8cf60bc3"
+  }
+}
