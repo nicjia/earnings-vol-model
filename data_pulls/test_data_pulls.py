@@ -57,6 +57,54 @@ class PullHelpers(unittest.TestCase):
         self.assertIn('700 * abs(s.close)', sql)
         self.assertIn('select o."secid", o."date"', sql)
 
+    def test_stream_query_uses_transaction_and_restores_autocommit(self):
+        class Cursor:
+            def __init__(self, conn):
+                self.conn, self.itersize, self.description = conn, None, None
+                self.batches = [[(1, dt.date(2018, 1, 2), 1.5)], [(2, dt.date(2018, 1, 3), None)], []]
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            def execute(self, query):
+                assert not self.conn.autocommit, 'named cursor needs a transaction'
+                self.query = query
+
+            def fetchmany(self, n):
+                self.description = [('secid',), ('date',), ('best_bid',)]
+                return self.batches.pop(0)
+
+        class DBAPI:
+            autocommit = True
+            closed = False
+
+            def cursor(self, name=None):
+                assert name, 'must be a server-side (named) cursor'
+                return Cursor(self)
+
+            def rollback(self):
+                pass
+
+        class Raw:
+            def __init__(self):
+                self.driver_connection = DBAPI()
+
+            def close(self):
+                self.driver_connection.closed = True
+
+        with tempfile.TemporaryDirectory() as tmp:
+            raw = Raw()
+            path = os.path.join(tmp, 'q.csv.gz')
+            self.assertEqual(wrds_pull.stream_query(raw, 'select 1', path, 1), 2)
+            self.assertEqual(gzip.open(path, 'rt').read().splitlines(),
+                             ['secid,date,best_bid', '1,2018-01-02,1.5', '2,2018-01-03,'])
+            self.assertTrue(raw.driver_connection.autocommit)
+            self.assertTrue(raw.driver_connection.closed)
+            self.assertEqual(os.listdir(tmp), ['q.csv.gz'])
+
     def test_columns_skip_missing_optional_and_require_required(self):
         class FakeDB:
             def describe_table(self, library, table):

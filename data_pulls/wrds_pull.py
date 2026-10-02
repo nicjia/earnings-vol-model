@@ -73,6 +73,46 @@ where o.ss_flag = '0'
 """
 
 
+def stream_query(raw, query, path, chunksize):
+    """Stream a query through a psycopg2 server-side cursor into a gzip CSV, atomically.
+
+    The wrds package opens connections in autocommit mode, where PostgreSQL refuses server-side
+    (named) cursors, so autocommit is switched off for this read-only transaction and restored after.
+    """
+    import csv
+    import gzip
+    dbapi = getattr(raw, 'driver_connection', None) or getattr(raw, 'connection', None) or raw
+    previous = dbapi.autocommit
+    tmp = path + '.partial'
+    rows = 0
+    try:
+        dbapi.autocommit = False
+        with dbapi.cursor(name='research7_stream') as cur, gzip.open(tmp, 'wt', newline='') as out:
+            cur.itersize = chunksize
+            cur.execute(query)
+            writer = None
+            while True:
+                batch = cur.fetchmany(chunksize)
+                if writer is None:
+                    writer = csv.writer(out)
+                    writer.writerow([d[0] for d in cur.description])
+                if not batch:
+                    break
+                writer.writerows(batch)
+                rows += len(batch)
+        dbapi.rollback()
+        os.replace(tmp, path)
+    finally:
+        try:
+            dbapi.rollback()
+        finally:
+            dbapi.autocommit = previous
+            raw.close()
+            if os.path.exists(tmp):
+                os.remove(tmp)
+    return rows
+
+
 def event_windows(events, sessions, pre, post, max_dte):
     """[(secid, first session, last session, last expiry)] for events with enough sessions on both sides."""
     out = []
@@ -105,20 +145,11 @@ class Puller:
         return self.db.raw_sql(query, date_cols=date_cols)
 
     def stream_to_file(self, query, path, chunksize=200_000):
-        """Write a large query to gzip CSV chunk by chunk through a server-side cursor (bounded memory)."""
-        import gzip
-        import pandas as pd
+        """Write a large query to gzip CSV chunk by chunk (bounded memory)."""
         engine = getattr(self.db, 'engine', None)
         if engine is None:
             sys.exit('This wrds package version exposes no SQLAlchemy engine; upgrade with: pip install -U wrds')
-        tmp = path + '.partial'
-        rows = 0
-        with engine.connect().execution_options(stream_results=True) as conn, gzip.open(tmp, 'wt', newline='') as out:
-            for i, chunk in enumerate(pd.read_sql_query(query, conn, chunksize=chunksize)):
-                chunk.to_csv(out, header=(i == 0), index=False)
-                rows += len(chunk)
-        os.replace(tmp, path)
-        return rows
+        return stream_query(engine.raw_connection(), query, path, chunksize)
 
     def columns(self, library, table, required, optional=()):
         """Columns to select: required ones must exist; missing optional ones are skipped with a note."""
