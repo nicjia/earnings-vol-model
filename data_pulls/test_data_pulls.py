@@ -55,6 +55,24 @@ class PullHelpers(unittest.TestCase):
         self.assertIn("(7, date '2024-01-05', date '2024-01-20', date '2024-02-29')", sql)
         self.assertIn('optionm_all.opprcd2024', sql)
         self.assertIn('700 * abs(s.close)', sql)
+        self.assertIn('select o."secid", o."date"', sql)
+
+    def test_columns_skip_missing_optional_and_require_required(self):
+        class FakeDB:
+            def describe_table(self, library, table):
+                return {'name': ['ticker', 'statpers', 'fpedats', 'fpi', 'meanest', 'numest', 'STDEV']}
+
+        class Args:
+            out = tempfile.mkdtemp()
+
+        puller = wrds_pull.Puller(Args())
+        puller._db = FakeDB()
+        cols = puller.columns('ibes', 'statsumu_epsus', ('ticker', 'statpers', 'fpedats', 'fpi', 'meanest'),
+                              ('numest', 'stdev', 'actual', 'anndats_act'))
+        self.assertEqual(cols, ['ticker', 'statpers', 'fpedats', 'fpi', 'meanest', 'numest', 'stdev'])
+        with self.assertRaises(SystemExit):
+            puller.columns('ibes', 'statsumu_epsus', ('ticker', 'actual'))
+        self.assertEqual(wrds_pull.select_list(['secid', 'return'], 'p.'), 'p."secid", p."return"')
 
 
 if __name__ == '__main__':

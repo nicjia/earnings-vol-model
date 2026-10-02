@@ -27,8 +27,14 @@ import sys
 
 PHASES = ('calendar', 'universe', 'ibes', 'stocks', 'options', 'manifest')
 SPY_SECID = 109820
-QUOTE_COLUMNS = ('o.secid, o.date, o.exdate, o.optionid, o.cp_flag, o.strike_price, o.best_bid, o.best_offer, '
-                 'o.volume, o.open_interest, o.impl_volatility, o.delta, o.cfadj')
+QUOTE_REQUIRED = ('secid', 'date', 'exdate', 'optionid', 'cp_flag', 'strike_price', 'best_bid', 'best_offer',
+                  'volume', 'open_interest', 'cfadj')
+QUOTE_OPTIONAL = ('impl_volatility', 'delta')
+
+
+def select_list(cols, alias=''):
+    """Quoted column list, so names such as "return" are never parsed as SQL keywords."""
+    return ', '.join(f'{alias}"{c}"' for c in cols)
 
 
 def sha256(path):
@@ -52,12 +58,12 @@ def window_values(windows):
     return ',\n'.join(rows)
 
 
-def options_sql(table_year, windows, mny_lo, mny_hi):
+def options_sql(table_year, windows, mny_lo, mny_hi, columns=QUOTE_REQUIRED + QUOTE_OPTIONAL):
     return f"""
 with w(secid, d0, d1, xmax) as (values
 {window_values(windows)}
 )
-select {QUOTE_COLUMNS}
+select {select_list(columns, 'o.')}
 from optionm_all.opprcd{table_year} o
 join w on o.secid = w.secid and o.date between w.d0 and w.d1 and o.exdate <= w.xmax
 join optionm_all.secprd{table_year} s on s.secid = o.secid and s.date = o.date
@@ -86,6 +92,7 @@ class Puller:
         os.makedirs(os.path.join(self.out, 'options'), exist_ok=True)
         os.makedirs(os.path.join(self.out, 'stocks'), exist_ok=True)
         self._db = None
+        self._columns = {}
 
     @property
     def db(self):
@@ -96,6 +103,21 @@ class Puller:
 
     def sql(self, query, date_cols=None):
         return self.db.raw_sql(query, date_cols=date_cols)
+
+    def columns(self, library, table, required, optional=()):
+        """Columns to select: required ones must exist; missing optional ones are skipped with a note."""
+        key = (library, table)
+        if key not in self._columns:
+            desc = self.db.describe_table(library=library, table=table)
+            self._columns[key] = {str(c).lower() for c in desc['name']}
+        have = self._columns[key]
+        missing = [c for c in required if c not in have]
+        if missing:
+            sys.exit(f'{library}.{table} is missing required columns {missing}; available: {sorted(have)}')
+        skipped = [c for c in optional if c not in have]
+        if skipped:
+            print(f'note: {library}.{table} has no {skipped}; continuing without them', flush=True)
+        return [c for c in (*required, *optional) if c in have]
 
     def path(self, *parts):
         return os.path.join(self.out, *parts)
@@ -190,23 +212,29 @@ class Puller:
         write_frame(link, self.path(f'ibes_link_{tag}.csv.gz'))
         tickers = ','.join(f"'{t}'" for t in sorted(set(link['ticker'])))
         start, end = f'{self.args.history_start}-01-01', f'{self.args.last_year + 1}-12-31'
-        act = self.sql(f"""select ticker, cusip, oftic, cname, pends, pdicity, anndats, anntims, actdats, acttims,
-                                  value, usfirm, curr_act
+        act_cols = self.columns('ibes', 'actu_epsus', ('ticker', 'pends', 'anndats', 'anntims', 'value'),
+                                ('cusip', 'oftic', 'cname', 'pdicity', 'actdats', 'acttims', 'usfirm', 'curr_act'))
+        act = self.sql(f"""select {select_list(act_cols)}
                            from ibes.actu_epsus
                            where ticker in ({tickers}) and measure = 'EPS' and pdicity = 'QTR'
-                             and anndats between '{start}' and '{end}'""", ['pends', 'anndats', 'actdats'])
+                             and anndats between '{start}' and '{end}'""",
+                       [c for c in ('pends', 'anndats', 'actdats') if c in act_cols])
         write_frame(act, self.path(f'ibes_actuals_{tag}.csv.gz'))
-        cons = self.sql(f"""select ticker, statpers, fpedats, fpi, numest, meanest, medest, stdev, highest, lowest,
-                                   actual, anndats_act, anntims_act, usfirm
+        cons_cols = self.columns('ibes', 'statsumu_epsus', ('ticker', 'statpers', 'fpedats', 'fpi', 'meanest'),
+                                 ('numest', 'medest', 'stdev', 'highest', 'lowest', 'numup', 'numdown', 'usfirm',
+                                  'curcode', 'actual', 'anndats_act', 'anntims_act'))
+        cons = self.sql(f"""select {select_list(cons_cols)}
                             from ibes.statsumu_epsus
                             where ticker in ({tickers}) and measure = 'EPS' and fpi = '6'
-                              and statpers between '{start}' and '{end}'""", ['statpers', 'fpedats', 'anndats_act'])
+                              and statpers between '{start}' and '{end}'""",
+                        [c for c in ('statpers', 'fpedats', 'anndats_act') if c in cons_cols])
         write_frame(cons, self.path(f'ibes_consensus_{tag}.csv.gz'))
         # One event per security and fiscal quarter: earliest announcement among linked I/B/E/S tickers.
         ev = act.merge(link[['ticker', 'secid']].drop_duplicates(), on='ticker')
         ev = ev.sort_values(['secid', 'pends', 'anndats']).drop_duplicates(['secid', 'pends'])
-        write_frame(ev[['secid', 'ticker', 'oftic', 'pends', 'anndats', 'anntims', 'actdats', 'acttims', 'value']],
-                    events_path)
+        keep = [c for c in ('secid', 'ticker', 'oftic', 'pends', 'anndats', 'anntims', 'actdats', 'acttims', 'value')
+                if c in ev.columns]
+        write_frame(ev[keep], events_path)
 
     # ------------------------------------------------------------------ stocks
     def stocks(self):
@@ -219,16 +247,20 @@ class Puller:
             path = self.path('stocks', f'stocks_{tag}_{y}.csv.gz')
             if os.path.exists(path) or f'secprd{y}' not in tables:
                 continue
-            df = self.sql(f"""select secid, date, open, high, low, close, volume, "return", cfadj, shrout
+            cols = self.columns('optionm_all', f'secprd{y}', ('secid', 'date', 'close', 'volume', 'return', 'cfadj'),
+                                ('open', 'high', 'low', 'shrout'))
+            df = self.sql(f"""select {select_list(cols)}
                               from optionm_all.secprd{y} where secid in ({secids})""", ['date'])
             write_frame(df, path)
         path = self.path(f'distributions_{tag}.csv.gz')
         if not os.path.exists(path):
-            write_frame(self.sql(f"""select secid, ex_date, declare_date, record_date, payment_date, amount,
-                                            distr_type, frequency, cancel_flag, adj_factor
+            cols = self.columns('optionm_all', 'distrd', ('secid', 'ex_date', 'amount'),
+                                ('declare_date', 'record_date', 'payment_date', 'distr_type', 'frequency',
+                                 'cancel_flag', 'adj_factor'))
+            write_frame(self.sql(f"""select {select_list(cols)}
                                      from optionm_all.distrd where secid in ({secids})
                                        and ex_date >= '{self.args.history_start}-01-01'""",
-                                 ['ex_date', 'declare_date', 'record_date', 'payment_date']), path)
+                                 [c for c in ('ex_date', 'declare_date', 'record_date', 'payment_date') if c in cols]), path)
         path = self.path('zero_curve.csv.gz')
         if not os.path.exists(path):
             write_frame(self.sql(f"select date, days, rate from optionm_all.zerocd where date >= '{self.args.history_start}-01-01' "
@@ -259,7 +291,9 @@ class Puller:
                 path = self.path('options', f'quotes_{tag}_{y}_{b // self.args.batch:03d}.csv.gz')
                 if not part or os.path.exists(path):
                     continue
-                df = self.sql(options_sql(y, part, self.args.mny_lo, self.args.mny_hi), ['date', 'exdate'])
+                cols = self.columns('optionm_all', f'opprcd{y}', QUOTE_REQUIRED + ('ss_flag',), QUOTE_OPTIONAL)
+                cols = [c for c in cols if c != 'ss_flag']
+                df = self.sql(options_sql(y, part, self.args.mny_lo, self.args.mny_hi, cols), ['date', 'exdate'])
                 write_frame(df, path)
                 print(f'{os.path.basename(path)}: {len(df):,} rows', flush=True)
 
