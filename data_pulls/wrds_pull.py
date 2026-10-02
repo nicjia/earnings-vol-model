@@ -104,6 +104,22 @@ class Puller:
     def sql(self, query, date_cols=None):
         return self.db.raw_sql(query, date_cols=date_cols)
 
+    def stream_to_file(self, query, path, chunksize=200_000):
+        """Write a large query to gzip CSV chunk by chunk through a server-side cursor (bounded memory)."""
+        import gzip
+        import pandas as pd
+        engine = getattr(self.db, 'engine', None)
+        if engine is None:
+            sys.exit('This wrds package version exposes no SQLAlchemy engine; upgrade with: pip install -U wrds')
+        tmp = path + '.partial'
+        rows = 0
+        with engine.connect().execution_options(stream_results=True) as conn, gzip.open(tmp, 'wt', newline='') as out:
+            for i, chunk in enumerate(pd.read_sql_query(query, conn, chunksize=chunksize)):
+                chunk.to_csv(out, header=(i == 0), index=False)
+                rows += len(chunk)
+        os.replace(tmp, path)
+        return rows
+
     def columns(self, library, table, required, optional=()):
         """Columns to select: required ones must exist; missing optional ones are skipped with a note."""
         key = (library, table)
@@ -288,14 +304,14 @@ class Puller:
             for b in range(0, len(secids), self.args.batch):
                 group = set(secids[b:b + self.args.batch])
                 part = [(s, max(a, lo), min(z, hi), x) for s, a, z, x in windows if s in group and a <= hi and z >= lo]
-                path = self.path('options', f'quotes_{tag}_{y}_{b // self.args.batch:03d}.csv.gz')
+                # The batch size is part of the name so runs with different --batch values never mix.
+                path = self.path('options', f'quotes_{tag}_{y}_b{self.args.batch}_{b // self.args.batch:03d}.csv.gz')
                 if not part or os.path.exists(path):
                     continue
                 cols = self.columns('optionm_all', f'opprcd{y}', QUOTE_REQUIRED + ('ss_flag',), QUOTE_OPTIONAL)
                 cols = [c for c in cols if c != 'ss_flag']
-                df = self.sql(options_sql(y, part, self.args.mny_lo, self.args.mny_hi, cols), ['date', 'exdate'])
-                write_frame(df, path)
-                print(f'{os.path.basename(path)}: {len(df):,} rows', flush=True)
+                rows = self.stream_to_file(options_sql(y, part, self.args.mny_lo, self.args.mny_hi, cols), path)
+                print(f'{os.path.basename(path)}: {rows:,} rows', flush=True)
 
     # ------------------------------------------------------------------ manifest
     def manifest(self):
@@ -333,7 +349,7 @@ def main(argv=None):
     p.add_argument('--max-dte', type=int, default=45, help='calendar days after E for the last expiry kept')
     p.add_argument('--mny-lo', type=float, default=0.7)
     p.add_argument('--mny-hi', type=float, default=1.4)
-    p.add_argument('--batch', type=int, default=25)
+    p.add_argument('--batch', type=int, default=10, help='securities per option query')
     p.add_argument('--smoke', action='store_true', help='3 names, latest year only: check access and SQL quickly')
     args = p.parse_args(argv)
     phases = PHASES if 'all' in args.phases else [x for x in PHASES if x in args.phases]
