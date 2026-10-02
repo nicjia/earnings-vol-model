@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "written_before_trading_results": "2026-10-02",
+  "purpose": "Autonomous earnings-options trading research on the 300-name, 2018-2025 earnings_vol cache: broaden strategy families, entry/exit timing and historical-only signal filters; freeze candidates on a selection sample; validate outside it; preserve every result.",
+  "data": {
+    "cache": "wrds_studies/earnings_vol (WRDS OptionMetrics + I/B/E/S, restored from nicjia/options-data release cache-2026-10-02)",
+    "universe": "300 securities fixed at the 2017-12-31 formation date by the collection protocol; later-delisted names retained",
+    "quotes": "Closing best bid/offer for all listed expiries within ~40 calendar days, sessions E-2..E+3 around each event",
+    "stocks": "Daily close, total return, cfadj and volume, 2015-2025"
+  },
+  "prior_exposure": "A previous study (research4) used this cache and inspected a long-straddle rule in 2022-2025, and earlier repository experiments examined some of these names and years. No sample here is a pristine untouched holdout; the stage-D test is out-of-selection for this protocol only.",
+  "event_alignment": "E = first stock session on or after the I/B/E/S announcement date in events.csv. Sessions come from the stock-price calendar. An event is usable only if quotes exist for its entry session.",
+  "information_set": "Decisions at an entry close use: stock closes/returns up to that close; option quotes at that close; earlier events whose exit session precedes the entry session (their stock moves and their own E-1 implied moves). Nothing dated after the entry close enters a signal, a strike/expiry choice, a liquidity gate or a filter.",
+  "execution": {
+    "primary": "Closing midpoint for every leg at entry and exit (live analogue: decide ~15 minutes before the close)",
+    "cost_sensitivities": "Pay 25% and 50% of each leg's quoted half-spread at entry and exit",
+    "fees": "$0.65 per option contract per side; packages are one contract per leg (calendars and condors included)",
+    "missing_exit": "If any leg lacks a usable exit quote (bid/offer absent or offer <= 0), the trade is unresolved. Unresolved trades are counted and disqualify a candidate if more than 1% of its trades are unresolved; they are never silently dropped. Exits with bid 0 and positive offer use the midpoint.",
+    "signal_lag_check": "Frozen policies are re-run with signals and contract choices taken one session before entry (entry contracts fixed in advance; missing entry quotes cancel the trade)."
+  },
+  "contracts": {
+    "front_expiry": "First expiry with exdate >= max(exit session date + 1 day, E+1 session date) and exdate <= E + 30 calendar days, quoted at entry",
+    "back_expiry": "Next quoted expiry after the front expiry with exdate <= front + 45 calendar days (calendars only)",
+    "atm_strike": "Front-expiry strike with both call and put quoted, nearest the entry stock close",
+    "implied_move_M": "Front ATM straddle mid / stock close at the entry session"
+  },
+  "families": {
+    "long_straddle": "Buy ATM call and put",
+    "long_strangle": "Buy put nearest S(1-0.5M) and call nearest S(1+0.5M), strikes strictly OTM",
+    "short_iron_fly_1x": "Sell ATM call+put; buy put nearest K-1.0*straddle and call nearest K+1.0*straddle",
+    "short_iron_fly_2x": "Same with wings at 2.0*straddle",
+    "short_iron_condor": "Sell put nearest S(1-0.5M), call nearest S(1+0.5M); buy put nearest S(1-1.5M), call nearest S(1+1.5M)",
+    "short_iron_condor_wide": "Sell put nearest S(1-1.0M), call nearest S(1+1.0M); buy put nearest S(1-2.0M), call nearest S(1+2.0M)",
+    "call_calendar": "Sell front ATM call, buy back-expiry call at the same strike",
+    "straddle_calendar": "Sell front ATM straddle, buy back-expiry straddle at the same strike"
+  },
+  "risk_normalization": "Return on risk = net P&L / risk at entry mids: long packages and calendars use the debit; short packages use max(wing width on either side) - credit. Packages with risk < $20 per unit, non-positive credit (shorts) or debit (longs/calendars), or degenerate strikes are skipped.",
+  "liquidity": {
+    "standard": "Every leg at entry: bid > 0, mid >= 0.05, open interest >= 10; (ask-bid)/mid <= 0.25 for ATM/short legs and calendar legs, <= 0.50 for long wings; stock close >= $10",
+    "tight": "Standard, plus (ask-bid)/mid <= 0.10 on ATM/short/calendar legs and <= 0.25 on wings"
+  },
+  "dividends": "Skip if a cash distribution ex-date falls after entry and on/before the front (calendars: back) expiry, using the distribution file; this uses scheduled ex-dates which are normally announced in advance.",
+  "timings": {
+    "pre_event": [["E-2", "E-1"]],
+    "through_event": [["E-2", "E"], ["E-2", "E+1"], ["E-1", "E"], ["E-1", "E+1"], ["E-1", "E+2"], ["E-1", "E+3"], ["E-2", "after_release"], ["E-1", "after_release"]],
+    "after_release": "Exit at close of E if, among the name's last 8 earlier events (at least 4 required), the absolute stock return E-1->E exceeded E->E+1 in a majority; else exit at close of E+1. Uses only earlier events."
+  },
+  "signals": {
+    "R": "M / H. H = mean over the name's last 8 earlier events (minimum 6) of E|J_k + s Z|, J_k = log(close E_k+1 / close E_k-1) for earlier events, s = EWMA(lambda=0.94 on squared daily log returns over the 60 sessions before entry, excluding sessions E_k-1..E_k+1 of earlier events) * sqrt(max(sessions from entry to front expiry - 2, 0)/252). Z standard normal; closed form.",
+    "TS": "Front ATM implied vol / back ATM implied vol at entry, Black-Scholes with r=0 and spot as underlying, from ATM call and put mids averaged; requires a back expiry",
+    "HR": "Mean over the name's last 8 earlier events in this cache (minimum 4) of |J_k| / M_k, with M_k the E_k-1 close implied move of the event-k front expiry"
+  },
+  "filters": {
+    "short_vol_families": ["none", "R>=1.0", "R>=1.2", "R>=1.4", "TS>=1.2", "TS>=1.5", "HR<=0.8", "HR<=1.0", "R>=1.2&HR<=1.0"],
+    "long_vol_families": ["none", "R<=0.9", "R<=0.75", "TS<=1.1", "HR>=1.0", "HR>=1.2", "R<=0.9&HR>=1.0"],
+    "assignment": "short_vol = short_iron_fly_1x, short_iron_fly_2x, short_iron_condor, short_iron_condor_wide, call_calendar, straddle_calendar; long_vol = long_straddle, long_strangle. A missing signal value fails any filter that uses it ('none' never fails)."
+  },
+  "candidate_grid": "Every family x every timing x its filters x {standard, tight} liquidity. The full list is generated by research5.candidates and its hash recorded in the frozen file.",
+  "samples": {
+    "name_half": "A if int(sha256(str(secid)), 16) % 2 == 0 else B",
+    "A_selection": "Events with E in 2018-2021, name half A",
+    "B_cross_section": "Events with E in 2018-2021, name half B",
+    "C_validation": "Events with E in 2022-2023, all names",
+    "D_test": "Events with E in 2024-2025, all names (quotes end 2025)"
+  },
+  "inference": {
+    "unit": "Equal-risk event return; GOOG/GOOGL-type duplicate issuer events averaged within issuer-event",
+    "cluster": "Calendar week of E (Monday-based ISO week)",
+    "screening_interval": "Cluster-robust normal 95% interval over weekly clusters (selection stage, all candidates)",
+    "reported_interval": "Weekly-cluster bootstrap 95% percentile interval, 2000 resamples, seed 20261002 (frozen policies)",
+    "multiple_comparisons": "Max-t over eligible stage-A candidates via centered weekly-cluster bootstrap (500 resamples)"
+  },
+  "selection": {
+    "eligibility": ">= 150 issuer-events, >= 40 issuers, <= 1% unresolved, mean > 0 at 25% half-spread cost, mean > 0 excluding the best 5 events",
+    "objective": "Cluster-robust lower 95% bound of mean midpoint return on risk",
+    "frozen_set": "Up to 5 policies: best eligible candidate per family group in order of objective, at most one per family, taken from the top of the ranking; plus the autonomous walk-forward selector itself",
+    "no_retuning": "Stages B, C and D are gates. Nothing observed there changes the frozen set."
+  },
+  "qualification": "A frozen policy qualifies only if, at midpoint, the weekly-cluster bootstrap lower 95% bound is > 0 in each of B, C and D; mean > 0 at 25% half-spread cost in each; mean > 0 excluding the best 5 events in D; >= 100 events and >= 40 issuers in D; max-t adjusted stage-A p < 0.05. Anything else is reported as not qualified with its numbers.",
+  "walk_forward": "Autonomous selector: for each year Y in 2020..2025 apply the same eligibility and objective to all events with E before Y (both name halves; eligibility minimum scaled to 100 events) and trade the winner during Y. Concatenated out-of-sample years are evaluated with the same statistics.",
+  "portfolio": "Illustration only for frozen policies: $100,000 start, 2% of current equity at risk per trade (max-loss basis, whole contracts allowed fractional for comparability), concurrent positions allowed, P&L realized at exit. Not a verified brokerage simulation.",
+  "preservation": "Every candidate's statistics in every stage that is run, every trade record, coverage counts and skip reasons are written to the private results directory; outputs are created exclusively and never overwritten. Post-freeze diagnostics of all candidates in B/C/D are labelled diagnostic and cannot alter the frozen set.",
+  "limitations": [
+    "I/B/E/S announcement dates are retrospective; release times are inferred only from earlier stock moves",
+    "Closing midpoint fills are assumed, not demonstrated",
+    "American early exercise and assignment ignored except via the dividend exclusion",
+    "Static 2017 formation universe; later IPOs excluded",
+    "Margin, buying power and borrow not modeled beyond max-loss risk",
+    "Implied vols use r=0 and spot (no dividend/forward adjustment); used only for the TS ratio"
+  ]
+}
