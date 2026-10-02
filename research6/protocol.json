@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "written_before_trading_results": "2026-10-02",
+  "purpose": "Second round on the same 300-name 2018-2025 earnings_vol cache: weekly calendars and diagonals held through earnings at several strike distances (user idea: short the first post-earnings weekly, long the following weekly, at strikes just outside the expected move from the ATM straddle or a single ATM put), plus reverse calendars, post-event theta and direction trades and history-driven directional verticals.",
+  "prior_exposure": "research5 and research4 evaluated other strategies on every year and name here; research5 included ATM calendars with a monthly-style back expiry. No sample is a pristine holdout; the four-way split is kept identical to research5 so that results are comparable, and the stage-D test is out-of-selection for this protocol only.",
+  "reuse": "Event alignment, information set, stock/quote caches, liquidity tiers, dividend exclusion, fees, cost sensitivities, inference and samples are exactly as research5/protocol.json (sha256 ee89673b6c02f7a55aea45fb632e14e37cb10ea49fa54abcb1a1984d28331b8b), except where stated here.",
+  "expiries": {
+    "front": "First expiry quoted at entry with exdate >= the E+1 session date and exdate <= E + 10 calendar days (the first post-earnings expiry, normally a weekly)",
+    "back_1w": "Next quoted expiry whose exdate is 6-8 calendar days after the front",
+    "back_2w": "Quoted expiry 13-15 calendar days after the front",
+    "post_event": "Post-event trades use the first expiry with exdate >= exit session date + 1 day and <= exit + 21 days"
+  },
+  "distances": {
+    "M": "ATM straddle mid / stock close at entry for the front expiry (ATM = strike nearest the close with both sides quoted)",
+    "put": "d = ATM put mid / stock close (the single-ATM-put expected move, roughly M/2)",
+    "0.75": "d = 0.75 M",
+    "straddle": "d = 1.0 M",
+    "1.25": "d = 1.25 M",
+    "edge_strikes": "Call strike = lowest quoted front strike >= S(1+d); put strike = highest quoted front strike <= S(1-d); both must also be quoted in the back expiry"
+  },
+  "families": {
+    "atm_call_calendar": "Sell front ATM call, buy back_1w call at the same strike",
+    "atm_put_calendar": "Sell front ATM put, buy back_1w put at the same strike",
+    "atm_straddle_calendar": "Sell front ATM straddle, buy back_1w straddle at the same strike",
+    "double_calendar_put": "Sell front OTM call and put at the 'put' edges; buy the same strikes in back_1w",
+    "double_calendar_0.75": "Same at 0.75 M edges",
+    "double_calendar_straddle": "Same at 1.0 M edges",
+    "double_calendar_1.25": "Same at 1.25 M edges",
+    "double_calendar_straddle_2w": "Same at 1.0 M edges with back_2w instead of back_1w",
+    "double_diagonal_put": "Sell front at the 'put' edges; buy back_1w one quoted strike further out on each side",
+    "double_diagonal_straddle": "Sell front at 1.0 M edges; buy back_1w one quoted strike further out on each side",
+    "reverse_straddle_calendar": "Buy front ATM straddle, sell back_1w straddle at the same strike",
+    "post_iron_fly": "At E+1 close: sell ATM straddle, buy wings nearest +/- 1.0 x straddle (post-event expiry)",
+    "post_momentum_vertical": "At E+1 close: buy a debit vertical in the direction of J_E = log(close E+1 / close E-1): long ATM, short nearest strike beyond S(1 +/- M_post) (call side if J_E > 0, put side if J_E < 0)",
+    "post_reversal_vertical": "Same vertical in the opposite direction of J_E",
+    "hist_drift_vertical": "At entry: debit vertical (long ATM, short nearest beyond S(1 +/- M)) in the direction of the mean J over the name's last 8 earlier events; skipped if that mean is exactly zero or unavailable"
+  },
+  "timings": {
+    "calendar_group": [["E-1", "E+1"], ["E-1", "hold_front"], ["E-1", "after_release"], ["E-2", "E+1"], ["E-2", "hold_front"]],
+    "hold_front": "Exit at the last session on or before min(front exdate, E+3 session date). If that session is the front expiration date, front legs are settled at intrinsic value from the stock close; back legs at their closing midpoint. If the front expires after E+3 the trade exits at E+3 midpoints.",
+    "after_release": "As research5 (E or E+1 by the name's earlier release pattern)",
+    "front_on_exit_day": "Whenever the exit session is the front expiration date, front legs settle at intrinsic value from the stock close",
+    "post_event": [["E+1", "E+2"], ["E+1", "E+3"]],
+    "directional": [["E-1", "E+1"], ["E-1", "after_release"], ["E-1", "E+3"]]
+  },
+  "risk_normalization": "Same-strike calendars: debit. Diagonals: debit + largest strike gap between short and long legs on a side. Reverse calendar: back-leg entry mid value (credit packages lose at most roughly the back legs' value). Debit verticals: debit. post_iron_fly: max wing width - credit. Risk below $20 per unit, non-positive debit (calendars, diagonals, verticals) or non-positive credit (reverse calendar, iron fly) skips the package.",
+  "signals": {
+    "R": "research5 R with the background horizon to the front expiry",
+    "HR": "research5 HR",
+    "TSw": "Front ATM implied vol / back_1w ATM implied vol, Black-Scholes r=0, time in weekdays/252",
+    "D": "Implied ex-event diffusion vol / historical background vol: sigma_d^2 = (IV_b^2 T_b - IV_f^2 T_f)/(T_b - T_f) from ATM front and back_1w IVs (weekdays/252); D = sigma_d / (research5 EWMA background daily vol x sqrt(252)); missing if sigma_d^2 <= 0",
+    "JM": "Post-event only: |J_E| / M_pre, M_pre = research5 implied move at E-1 for the standard front",
+    "DRIFT": "|mean J over last 8 earlier events| / H, directional family only"
+  },
+  "filters": {
+    "calendar_group": ["none", "R>=1.0", "R>=1.2", "TSw>=1.15", "TSw>=1.3", "D<=1.0", "HR<=1.0", "R>=1.0&D<=1.0"],
+    "reverse_straddle_calendar": ["none", "R<=0.9", "TSw<=1.1", "HR>=1.0"],
+    "post_iron_fly": ["none", "JM<=1.0", "JM>=1.0"],
+    "post_vertical": ["none", "JM>=1.0", "JM>=1.5"],
+    "hist_drift_vertical": ["none", "DRIFT>=0.25", "DRIFT>=0.5"]
+  },
+  "candidate_grid": "Every family x its timings x its filters x {standard, tight} liquidity; generated by research6.candidates and hashed in the frozen file.",
+  "selection": "Identical to research5: eligibility (>=150 issuer-events, >=40 issuers, <=1% unresolved, mean > 0 at 25% half-spread cost, mean > 0 excluding best 5); objective = cluster-robust lower 95% bound of mean midpoint return on sample A; freeze up to 5 policies, at most one per family; B, C, D are gates only.",
+  "qualification": "Identical to research5.",
+  "walk_forward": "Identical to research5, over this protocol's grid.",
+  "limitations_added": [
+    "Settlement at intrinsic from the closing stock price ignores pin risk, after-hours moves on expiration day and early assignment",
+    "Back-week quotes are needed at exit; trades whose back legs lack exit quotes are unresolved",
+    "Reverse-calendar risk is an approximation, not a broker margin requirement"
+  ]
+}
