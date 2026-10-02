@@ -1,0 +1,18 @@
+{
+  "events": 2020,
+  "status": {
+    "closed": 59799,
+    "skip:illiquid": 56909,
+    "skip:dividend_in_window": 14685,
+    "skip:no_back_expiry": 7798,
+    "skip:risk_below_20": 2748,
+    "skip:spot_below_10_or_missing": 2032,
+    "skip:no_front_expiry": 648,
+    "skip:no_entry_quotes": 576,
+    "skip:no_wing": 114,
+    "unresolved": 81,
+    "skip:no_strike": 27,
+    "skip:no_release_history": 16,
+    "skip:non_positive_debit": 7
+  }
+}

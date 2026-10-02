@@ -1,0 +1,124 @@
+{
+  "frozen_at": "2026-10-02T19:49:31.564704+00:00",
+  "protocol_sha256": "ee89673b6c02f7a55aea45fb632e14e37cb10ea49fa54abcb1a1984d28331b8b",
+  "grid_sha256": "a48a1535e065f2f95ea8cb2e38f84234a0c70f1f79689a55ac69a65c6e75fb01",
+  "candidates": 1224,
+  "eligible": 55,
+  "policies": [
+    {
+      "id": "long_straddle|E-2->E-1|R<=0.9|tight",
+      "family": "long_straddle",
+      "entry": "E-2",
+      "exit": "E-1",
+      "filter": "R<=0.9",
+      "liquidity": "tight",
+      "selection": {
+        "events": 228,
+        "issuers": 72,
+        "weeks": 104,
+        "mean": 0.02633217312909988,
+        "ci_low_normal": 0.006004274996883781,
+        "mean_c25": 0.014410885605591945,
+        "mean_c50": 0.002489598082084099,
+        "without_best5": 0.011702866260085619,
+        "win_rate": 0.5131578947368421,
+        "unresolved_share": 0.0
+      },
+      "max_t_p": 0.11
+    },
+    {
+      "id": "long_strangle|E-2->E-1|R<=0.9|tight",
+      "family": "long_strangle",
+      "entry": "E-2",
+      "exit": "E-1",
+      "filter": "R<=0.9",
+      "liquidity": "tight",
+      "selection": {
+        "events": 202,
+        "issuers": 64,
+        "weeks": 95,
+        "mean": 0.04709502723305552,
+        "ci_low_normal": 0.004923188084118214,
+        "mean_c25": 0.03409173151681587,
+        "mean_c50": 0.021088435800576146,
+        "without_best5": 0.01544472746162211,
+        "win_rate": 0.49504950495049505,
+        "unresolved_share": 0.0
+      },
+      "max_t_p": 0.234
+    },
+    {
+      "id": "short_iron_condor_wide|E-1->after_release|R>=1.0|standard",
+      "family": "short_iron_condor_wide",
+      "entry": "E-1",
+      "exit": "after_release",
+      "filter": "R>=1.0",
+      "liquidity": "standard",
+      "selection": {
+        "events": 482,
+        "issuers": 106,
+        "weeks": 160,
+        "mean": 0.02118002274510211,
+        "ci_low_normal": -0.002602606149813433,
+        "mean_c25": 0.008791707496140893,
+        "mean_c50": -0.003596607752820332,
+        "without_best5": 0.01822110374517944,
+        "win_rate": 0.6887966804979253,
+        "unresolved_share": 0.00411522633744856
+      },
+      "max_t_p": 0.454
+    },
+    {
+      "id": "short_iron_fly_2x|E-1->after_release|R>=1.0|tight",
+      "family": "short_iron_fly_2x",
+      "entry": "E-1",
+      "exit": "after_release",
+      "filter": "R>=1.0",
+      "liquidity": "tight",
+      "selection": {
+        "events": 283,
+        "issuers": 71,
+        "weeks": 119,
+        "mean": 0.042077405899277304,
+        "ci_low_normal": -0.002869434739293908,
+        "mean_c25": 0.03076968091793146,
+        "mean_c50": 0.019461955936585503,
+        "without_best5": 0.03178871167377007,
+        "win_rate": 0.6219081272084805,
+        "unresolved_share": 0.0034965034965034965
+      },
+      "max_t_p": 0.394
+    },
+    {
+      "id": "short_iron_condor|E-1->after_release|R>=1.4|tight",
+      "family": "short_iron_condor",
+      "entry": "E-1",
+      "exit": "after_release",
+      "filter": "R>=1.4",
+      "liquidity": "tight",
+      "selection": {
+        "events": 218,
+        "issuers": 70,
+        "weeks": 118,
+        "mean": 0.04110687914742612,
+        "ci_low_normal": -0.013579727636012985,
+        "mean_c25": 0.02230036689037692,
+        "mean_c50": 0.003493854633327752,
+        "without_best5": 0.026931671883305298,
+        "win_rate": 0.6284403669724771,
+        "unresolved_share": 0.00904977375565611
+      },
+      "max_t_p": 0.632
+    }
+  ],
+  "records_A_sha256": "65ef543c35326a595c76845ff728fa3079c22e26152446f32e26838585f0fb6c",
+  "source_hashes": {
+    "protocol.json": "ee89673b6c02f7a55aea45fb632e14e37cb10ea49fa54abcb1a1984d28331b8b",
+    "pickle_compat.py": "ca64dfec3977f9c9e6dac8e4efc0ced44377324a74cb69aae6d7cf15d497d5d9",
+    "data.py": "a96a472cee150c99abb390beda46f8f1bbdd12e5da934082a30f652cf7a66aab",
+    "engine.py": "7c51138ba15713e953439f9f64a8ccb45fb7c8e849b923faff8dc0846352ec4f",
+    "stats.py": "2438890a3746419a79ae989c74da2a2e7db49ee95f74ff0996ae9e32e0beb43d",
+    "candidates.py": "143bcabedc6e7f15d2afd25c06eec7790c8604338a4fb3a8478227361ee57742",
+    "run.py": "dc69d3e6dab97322b5c1a159855aaad25d9e14acb08b1f57be1ed40d8cf60bc3"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "events": 2501,
+  "status": {
+    "closed": 81255,
+    "skip:illiquid": 70338,
+    "skip:dividend_in_window": 12769,
+    "skip:no_back_expiry": 8176,
+    "skip:risk_below_20": 3818,
+    "skip:spot_below_10_or_missing": 1480,
+    "skip:no_entry_quotes": 1256,
+    "skip:no_front_expiry": 640,
+    "unresolved": 113,
+    "skip:no_release_history": 112,
+    "skip:no_wing": 98,
+    "skip:non_positive_debit": 9,
+    "skip:split_or_missing_stock_in_window": 8
+  }
+}

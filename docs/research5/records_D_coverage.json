@@ -1,0 +1,19 @@
+{
+  "events": 1862,
+  "status": {
+    "closed": 59929,
+    "skip:illiquid": 47241,
+    "skip:dividend_in_window": 11254,
+    "skip:no_back_expiry": 7616,
+    "skip:spot_below_10_or_missing": 3096,
+    "skip:risk_below_20": 2654,
+    "skip:no_entry_quotes": 1368,
+    "unresolved": 453,
+    "skip:no_front_expiry": 344,
+    "skip:no_strike": 48,
+    "skip:no_wing": 40,
+    "skip:non_positive_credit": 8,
+    "skip:non_positive_debit": 7,
+    "skip:missing_entry_quote": 6
+  }
+}
