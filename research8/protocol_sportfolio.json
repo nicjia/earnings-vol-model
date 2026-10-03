@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "written_before_computing": "2026-10-03",
+  "what": "Portfolio of the STRATEGIES.md rules: 'S' = every trade of S1-S5; 'S+P1' adds the provisional P1. Each trade is one unit of risk (research convention); a week's return is the mean return of all trades decided that week (0 if none). Annual Sharpe = weekly mean / sd x sqrt(52), at mid, 25% and 50% cost.",
+  "status": "NOT an out-of-sample test. Every component already passed sample E individually; combining them and reporting their joint Sharpe on sample E (and on research7 samples B-D) is descriptive. The only valid test of the combination is forward paper trading.",
+  "duplicates": "S1/S4 (and S5) can select the same event and package; both are kept because each rule trades independently (that concentration is part of the portfolio's risk). A de-duplicated variant (one trade per event, rule priority S2 > S3 > S1 > S4 > S5) is also reported."
+}
