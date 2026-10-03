@@ -129,7 +129,7 @@ docs/research8/sportfolio*): annual Sharpe at midpoint 0.9 / 1.9 / 2.2 / 1.3 in 
 The combination is positive at midpoint everywhere but not robust to realistic fills; this is not a test (every rule
 had already passed E), and only forward paper trading with recorded fills can decide it.
 
-## Passed an untouched test, thin evidence (research8, 2026-10-03)
+## Passed one untouched test, weak replication (research8, 2026-10-03)
 
 ### V1. Index put-writing only when VIX is far above a stock-only vol forecast (HAR >= 1.5)
 
@@ -154,6 +154,10 @@ had already passed E), and only forward paper trading with recorded fills can de
   thresholds (1.1-1.3) were exposed to a -28% month that 1.5 avoided only because that month's ratio fell between 1.3
   and 1.5; a single crash month entered at ratio >= 1.5 would dominate the record. The PUT index is a benchmark: real
   fills, early assignment and margin are not modelled. The companion frozen rule (EWMA >= 1.0) failed the test.
+- **Out-of-time replication (pre-registered, research8/protocol_v1_replication.json):** the same rule on the CBOE SPX
+  iron-condor index (CNDR), 1990-2006 (202 months, untouched): held 10 months, Sharpe 0.62 vs 0.56 for always-holding,
+  block t 2.33, lower bound > 0, max drawdown 0.4% vs 20.5%. It **missed the Sharpe >= 1.0 gate**, so V1 has one strong
+  pass and one weak pass: the timing reliably avoids drawdowns but adds little Sharpe over always selling premium.
 - **Next step:** forward paper trading with recorded fills; size so that a -30% month on the put notional is tolerable.
 
 ## Provisional
