@@ -1,0 +1,36 @@
+{
+  "written_at": "2026-10-03T04:40:51.810814+00:00",
+  "expanded_universe_downloaded": false,
+  "frozen_policies": [
+    "through:double_calendar_put_1w|P-4->hold_front|TSw>=1.15|tight",
+    "through:atm_put_calendar_1w|P-1->hold_front|TSw>=1.15|tight",
+    "through:double_calendar_straddle_1w|P-4->hold_front|TSw>=1.15|standard",
+    "through:double_diagonal_put_1w|P-4->hold_front|R>=1.4|tight",
+    "through:double_calendar_straddle_2w|P-4->hold_front|none|standard"
+  ],
+  "replications": {
+    "research5_long_straddle": "pre:long_straddle|P-1->P|R<=0.9|tight",
+    "research5_long_strangle": "pre:long_strangle|P-1->P|R<=0.9|tight",
+    "research6_double_diagonal_put": "through:double_diagonal_put_1w|P-1->Q|D<=1.0|tight",
+    "research6_double_calendar_2w": "through:double_calendar_straddle_2w|P->hold_front|R>=1.2|standard"
+  },
+  "post_hoc_candidates": [
+    "pre:long_straddle|P-1->P|R<=0.9|tight",
+    "pre:long_straddle|P-4->P|HR>=1.0|standard",
+    "pre:long_straddle|P-4->P|HR>=1.0|tight",
+    "pre:long_straddle|P-9->P|none|tight",
+    "pre:long_strangle|P-1->P|HR>=1.0|tight",
+    "pre:long_strangle|P-1->P|R<=0.9|tight",
+    "through:double_calendar_straddle_2w|P-1->hold_front|R>=1.2|standard",
+    "through:double_calendar_straddle_2w|P-4->hold_front|D<=1.0|standard",
+    "through:double_calendar_straddle_2w|P-4->hold_front|TSw>=1.15|standard",
+    "through:short_iron_condor_wide|P-1->Q|R>=1.2|tight",
+    "through:short_iron_condor_wide|P-1->Q|R>=1.4|tight",
+    "through:short_iron_fly_2x|P-1->Q+4|D<=1.0|standard",
+    "through:short_iron_fly_2x|P-4->Q+4|R>=1.0|standard",
+    "through:short_iron_fly_2x|P-4->Q+4|none|standard"
+  ],
+  "walk_forward": "The research5 walk-forward selector, run on the expanded universe with selection on years before Y",
+  "evaluation_sha256": "ceb68e72aa681e76299d13301c4e516a78db3350db6fe394118df93957170e4a",
+  "gates": "Per rule in E: weekly-bootstrap lower 95% bound > 0 at midpoint, mean > 0 at 25% half-spread cost, mean > 0 excluding best 5, >= 100 events and >= 40 issuers. Report all rules; the post-hoc list is adjusted by Holm over its own size."
+}
