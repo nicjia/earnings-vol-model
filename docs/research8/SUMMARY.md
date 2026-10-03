@@ -10,6 +10,12 @@ Freeze picks (dev): {'best_crps': 'HAR_FHS_shrunk', 'best_log': 'HAR_FHS_shrunk'
 - HAR_FHS_shrunk: dev CRPS skill +2.22% [+1.62%, +2.82%], log-score gain +0.145 nats, release-day CRPS skill +12.02%
 - HAR_T_shrunk: dev CRPS skill +1.82% [+1.52%, +2.12%], log-score gain +0.135 nats, release-day CRPS skill +12.02%
 
+Test (expanded names, 2023+):
+- best_crps (HAR_FHS_shrunk): estimate +0.0221 [+0.0172, +0.0271], passed=True (lower bound True, every group True, coverage True)
+- best_log (HAR_FHS_shrunk): estimate +0.1467 [+0.1258, +0.1684], passed=True (lower bound True, every group True, coverage True)
+- best_tw (HAR_T_shrunk): estimate +0.0471 [+0.0410, +0.0531], passed=True (lower bound True, every group True, coverage True)
+- best_release_crps (EWMA_Gauss_shrunk): estimate +0.1482 [+0.1390, +0.1561], passed=False (lower bound True, every group False, coverage True)
+
 ## Phase 2 (A0): market price vs stock-only value
 
 **dev_HAR_FHS_shrunk.json** (dev): eligible 5, frozen [['P-1', 'straddle', 'hedged', 'sell', 'rel', 1.1], ['P-1', 'strangle', 'hedged', 'sell', 'rel', 1.1]]
