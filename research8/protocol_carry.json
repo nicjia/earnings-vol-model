@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "phase": "research8 volatility term-structure trades on the daily panel (SPY + 10 most liquid names)",
+  "written_before_any_result": "2026-10-03, before any term-structure result from research8-daily-2026-10",
+  "contracts": "At each session and name: front = listed expiry 21-45 calendar days out nearest 30; back = listed expiry 50-100 days out nearest 75; common strike = nearest spot with all four legs quoted; every leg bid > 0, mid >= 0.05, OI >= 10, (ask - bid)/mid <= 0.25; single names skipped if a dividend ex-date falls before the back expiry",
+  "signal": "slope = back ATM IV / front ATM IV (each the mean of call and put IV from mids); percentile of today's slope among the name's previous 252 sessions with a candidate (needs >= 60)",
+  "trades": {
+    "long_calendar": "slope percentile <= 20% (front rich vs back): sell 1 front straddle, buy 1 back straddle",
+    "short_calendar": "slope percentile >= 80% (front cheap vs back): buy 1 front straddle, sell 1 back straddle"
+  },
+  "exits": "time 5 sessions; time 10 sessions; revert = slope percentile (vs the same trailing history) crosses 50% or 10 sessions; event guard: close the session before a release; quotes missing -> next quoted session",
+  "hedge": "hedged (daily delta hedge of all four legs at stock closes with entry IVs, 2 bp) or unhedged",
+  "rules": "direction {2} x exit {time5, time10, revert} x hedge {2} = 12",
+  "returns": "P&L per share / (front mid + back mid) at entry; execution at mid (primary), 25% of half-spreads, full bid/ask; fees $0.65 per contract per side on four legs reported separately; attribution of gross mid P&L into the front and back legs, hedge, spreads, fees",
+  "samples": "dev: entries 2016-2021 with exits by 2021-12-31; test: entries from 2022-01-03",
+  "freeze_rule": "Eligible on dev at 25%: >= 150 trades, weekly t >= 3.0, Sharpe > 0.8, positive in 2016-2018 and 2019-2021; freeze at most 2 (one per direction)",
+  "test_gates": "as protocol_converge.json (25%: t >= 2, Sharpe >= 1, positive at full spread, positive in >= 3 of 2022-2025)"
+}
