@@ -164,6 +164,20 @@ had already passed E), and only forward paper trading with recorded fills can de
 - **Verdict:** treat V1's 2016-2026 pass as probably lucky; the evidence does not support implied-vs-model timing as a
   robust edge. Do not trade it beyond paper.
 
+### C1. BTC weekly ATM straddle sold only when traded IV >= 1.1 x a crypto-only HAR forecast
+
+- **Data:** Deribit public trade history (research8/protocol_crypto.json, research8/crypto.py). Entry at the amount-weighted
+  price of taker-sell trades (bid-side, executable) of the next-Friday ATM call and put in 08:00-10:00 UTC on Fridays;
+  settlement at Deribit delivery prices; Deribit fees. P&L in coin per 1 BTC notional.
+- **Signal:** mean traded IV of the two legs / sigma_hat, sigma_hat = HAR (1/7/30/90-day lags) on BTC-PERPETUAL daily
+  closes, refitted each 1 January, using the previous 00:00 UTC forecast. Sell if ratio >= 1.1, else stay flat.
+- **Results:** dev 2020-2022: Sharpe 1.50, t 2.33, held 11 of 155 weeks (always selling: Sharpe -0.03 with a -66% week).
+  Test 2023-2026 (untouched): Sharpe 1.30, block t 2.00, worst week -1.9%, held **9 of 194 weeks**; passed every strong
+  gate. The sibling ETH rule failed the test (Sharpe -0.20) and so did the two-coin portfolio (0.53).
+- **Reading:** a second thin pass of the same idea as V1. Across five pre-registered tests of "sell premium only when
+  implied is well above a model forecast" (SPX 2016-26 strong, BTC 2023-26 strong, SPX-CNDR 1990-2006 weak, NDX
+  synthetic fail, ETH fail), each pass rests on 9-14 trades. Paper trade only.
+
 ## Provisional
 
 ### P1. Short 2x iron fly, P-4 to Q+4, standard (no filter, or R >= 1.0)
