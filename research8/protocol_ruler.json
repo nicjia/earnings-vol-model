@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "phase": "research8 approach R (ruler) on the phase 2 records",
+  "written_before_any_result": "2026-10-03 (before any phase 2 or ruler result)",
+  "thesis": "If the ATM straddle (anchor A) is fairly priced, a strangle (B) whose market price relative to A departs from the stock-only model's relative value is mispriced; trade B against A.",
+  "pairs": "Phase 2 straddle and strangle records for the same event, decision label and expiry (same liquidity, exclusion and hedging rules as protocol_phase2.json).",
+  "signal": "ratio = (strangle mid / straddle mid) / (strangle model value / straddle model value), model = phase 1 best_crps frozen model",
+  "position": "sell_wings (ratio >= theta): sell 1 strangle, buy beta straddles; buy_wings (ratio <= 1/theta): the reverse. beta = strangle BS vega / straddle BS vega at entry implied vols (zero net vega). Hedged variants delta-hedge every leg daily as in phase 2.",
+  "returns": "P&L / (strangle mid + beta x straddle mid), costs 0/25/50/100% of the quoted half-spreads of all legs at entry, $0.65 per contract on 4 legs, hedge cost 2 bp",
+  "rules": "label {P-4, P-1, P, Q, Q+1} x hedge {hedged, unhedged} x direction {sell_wings, buy_wings} x theta {1.1, 1.25, 1.5} = 60",
+  "samples": "as phase 2: dev = original names with expiry <= 2022-12-30; test = expanded names from 2023-01-03; secondary = original names from 2023",
+  "freeze_rule": "Eligible on dev: >= 200 trades, 25%-cost mean > 0 with bootstrap lower bound > 0, weekly t >= 3.0, positive 25%-cost mean in 2018-2020 and in 2021-2022. Freeze at most 3 by 25%-cost Sharpe, at most one per (label, direction).",
+  "test_gates": "Same as phase 2 (strong: lower bound > 0, Sharpe >= 1.0 and t >= 2.0 at 25% cost, positive at 50% cost)."
+}
