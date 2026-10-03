@@ -129,7 +129,7 @@ docs/research8/sportfolio*): annual Sharpe at midpoint 0.9 / 1.9 / 2.2 / 1.3 in 
 The combination is positive at midpoint everywhere but not robust to realistic fills; this is not a test (every rule
 had already passed E), and only forward paper trading with recorded fills can decide it.
 
-## Passed one untouched test, weak replication (research8, 2026-10-03)
+## Passed one untouched test, then weak and failed replications (research8, 2026-10-03)
 
 ### V1. Index put-writing only when VIX is far above a stock-only vol forecast (HAR >= 1.5)
 
@@ -158,7 +158,11 @@ had already passed E), and only forward paper trading with recorded fills can de
   iron-condor index (CNDR), 1990-2006 (202 months, untouched): held 10 months, Sharpe 0.62 vs 0.56 for always-holding,
   block t 2.33, lower bound > 0, max drawdown 0.4% vs 20.5%. It **missed the Sharpe >= 1.0 gate**, so V1 has one strong
   pass and one weak pass: the timing reliably avoids drawdowns but adds little Sharpe over always selling premium.
-- **Next step:** forward paper trading with recorded fills; size so that a -30% month on the put notional is tolerable.
+- **Cross-market check (pre-registered, research8/protocol_xmarket.json, synthetic prices):** the same kind of timing
+  on Nasdaq-100 puts (VXN vs a HAR forecast, threshold 1.2 frozen on 2001-2014) **failed** on 2015-2026: Sharpe 0.21
+  vs 0.85 for always selling, and it still took the -23.6% month. EUR/USD cells froze nothing.
+- **Verdict:** treat V1's 2016-2026 pass as probably lucky; the evidence does not support implied-vs-model timing as a
+  robust edge. Do not trade it beyond paper.
 
 ## Provisional
 
