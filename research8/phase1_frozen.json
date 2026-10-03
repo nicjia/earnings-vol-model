@@ -1,0 +1,14 @@
+{
+  "frozen_on": "2026-10-03",
+  "source": "docs/research8/phase1/dev.json (freeze rule of protocol_phase1.json, applied by research8/report1.py)",
+  "frozen": {
+    "best_crps": "HAR_FHS_shrunk",
+    "best_log": "HAR_FHS_shrunk",
+    "best_tw": "HAR_T_shrunk",
+    "best_release_crps": "EWMA_Gauss_shrunk"
+  },
+  "notes": [
+    "Release-day CRPS ties exactly across EWMA/GARCH/HAR x Gauss/T/FHS with the shrunk jump, because a 1-session release forecast has no diffusion session left (clarification 7); the tie-break picks the simplest (EWMA_Gauss_shrunk).",
+    "Gate 3 (90% coverage 0.85-0.95) is checked at the seven horizons and the release day."
+  ]
+}
