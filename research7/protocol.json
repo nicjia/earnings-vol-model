@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "written_before_trading_results": "2026-10-03",
+  "purpose": "Third round, on the WRDS release research7-data-2026-10 (original 300 names, 2018-2025): use I/B/E/S announcement times to place every trade exactly relative to the release, test longer pre-release holds, back-month calendars and surprise-based post-release trades, and replicate the research5/research6 leads with correct timing. Freeze policies now; their untouched final test is the expanded universe, which has not been downloaded or inspected.",
+  "data": {
+    "release": "nicjia/options-data release research7-data-2026-10 (manifest manifests/research7-data-2026-10.json)",
+    "quotes": "OptionMetrics closing bid/offer, open interest, implied vol and delta; sessions E-10..E+5 around each I/B/E/S announcement date E; expiries <= E+45 days; strikes 0.7-1.4 x close; standard contracts only",
+    "stocks": "OptionMetrics daily close/return/cfadj/volume 2014-2025-08-29",
+    "ibes": "Quarterly EPS actuals with announcement time (anntims) and the fpi=6 consensus history",
+    "validation_of_times": "Before data use it was checked that the larger of the report-day and next-day absolute returns falls on the report day for 71% of before-open releases and on the next day for 80% of after-close releases; times are informative but not perfect."
+  },
+  "prior_exposure": "All 2018-2025 dates and the original 300 names were used by research4-6. Samples A-D here are therefore not pristine. Sample E (the expanded universe: 300 names ranked after the original at Dec-2017 plus up to 200 new top names at Dec-2020) has never been downloaded or inspected and is reserved as the untouched final test.",
+  "release_timing": {
+    "rule": "Let d = anndats and t = anntims (US Eastern). If d is a session and t < 09:30: P = session before d, Q = d (before open). If d is a session and t >= 16:00: P = d, Q = next session (after close). If d is not a session: P = last session before d, Q = first session after d. Releases with 09:30 <= t < 16:00 or missing t are excluded and counted.",
+    "P": "last close before the release",
+    "Q": "first close after the release"
+  },
+  "information_set": "As research5: decisions at a close use stock data to that close, quotes at that close, and earlier events whose Q session precedes the decision. Consensus uses only rows with statpers on or before the decision date. The reported EPS is used only by post-release trades (entry at Q or later).",
+  "execution": "As research5: closing midpoints at entry and exit, $0.65 per contract per side, 25% and 50% half-spread sensitivities, unresolved exits counted and never dropped. A leg expiring on the exit date settles at intrinsic from the stock close (no exit commission).",
+  "signal_lag_check": "Frozen policies are re-run with every decision taken one session before entry (contracts fixed then, executed at the next close; missing quotes cancel). Available for all entries because quotes start at E-10.",
+  "expiries": {
+    "pre_release": "front = first expiry with exdate >= Q date and <= Q + 10 days, quoted at entry",
+    "through_noncalendar": "front = first expiry with exdate >= max(exit date, Q date) and <= Q + 30 days",
+    "calendar_front": "first expiry with exdate >= Q date and <= Q + 10 days",
+    "back_1w": "quoted expiry 6-8 days after the front",
+    "back_2w": "quoted expiry 13-15 days after the front",
+    "back_month": "first quoted expiry at least 21 days after the front",
+    "post_release": "first expiry with exdate >= exit date + 1 day and <= exit + 21 days"
+  },
+  "families": {
+    "pre_release": {
+      "long_straddle": "Buy ATM call and put",
+      "long_strangle": "Buy put nearest S(1-0.5M) and call nearest S(1+0.5M), strictly OTM",
+      "straddle_calendar_1w": "Sell front ATM straddle, buy back_1w straddle at the same strike",
+      "short_iron_fly_2x": "Sell ATM straddle, buy wings nearest +/- 2.0 x straddle"
+    },
+    "through_release": {
+      "long_straddle": "as above", "long_strangle": "as above",
+      "short_iron_fly_1x": "wings +/- 1.0 x straddle", "short_iron_fly_2x": "wings +/- 2.0 x straddle",
+      "short_iron_condor": "short S(1 -/+ 0.5M), long S(1 -/+ 1.5M)", "short_iron_condor_wide": "short S(1 -/+ 1.0M), long S(1 -/+ 2.0M)",
+      "atm_straddle_calendar_1w": "Sell front ATM straddle, buy back_1w straddle", "atm_put_calendar_1w": "Sell front ATM put, buy back_1w put",
+      "atm_straddle_calendar_month": "Sell front ATM straddle, buy back_month straddle",
+      "double_calendar_put_1w": "Sell front call/put just outside +/- ATM put mid; buy the same strikes in back_1w",
+      "double_calendar_straddle_1w": "Same at +/- 1.0 straddle", "double_calendar_straddle_2w": "Same at +/- 1.0 straddle with back_2w",
+      "double_diagonal_put_1w": "Sell front at the put edges; buy back_1w one quoted strike further out"
+    },
+    "post_release": {
+      "post_iron_fly_1x": "At Q: sell ATM straddle, buy wings +/- 1.0 x straddle",
+      "post_momentum_vertical": "At Q: debit vertical (long ATM, short nearest beyond S(1 +/- M_Q)) in the direction of log(close Q / close P)",
+      "post_reversal_vertical": "Same vertical against that direction",
+      "post_surprise_vertical": "Same vertical in the direction of reported EPS minus the latest consensus mean before P"
+    }
+  },
+  "timings": {
+    "pre_release": [["P-9", "P"], ["P-4", "P"], ["P-1", "P"]],
+    "through_noncalendar": "entries P, P-1, P-4 x exits Q, Q+2, Q+4",
+    "through_calendar": "entries P, P-1, P-4 x exits Q, hold_front (front expiry close if on or before the Q+4 session date, else Q+4)",
+    "post_release": [["Q", "Q+2"], ["Q", "Q+4"]]
+  },
+  "risk_normalization": "As research5/research6 (debit; width minus credit; diagonals add the strike gap).",
+  "signals": {
+    "M": "front ATM straddle mid / stock close at the decision close",
+    "J_k": "log(close Q_k / close P_k) for earlier events (one release interval)",
+    "R": "M / H, H = mean over the last 8 earlier events (minimum 6) of E|J_k + sZ|, s = EWMA(0.94, 60 sessions excluding P_k..Q_k of earlier events) x sqrt(max(sessions from decision to front expiry - 1, 0)/252)",
+    "HR": "mean over the last 8 earlier events with quotes (minimum 4) of |J_k| / M_k, M_k = M at P_k for the pre-release front",
+    "TSw": "front ATM implied vol / back_1w ATM implied vol, own Black-Scholes inversion of mids (r=0, weekdays/252)",
+    "D": "implied ex-event diffusion vol from front and back_1w ATM vols / historical background vol (research6 definition)",
+    "JM": "post only: |log(close Q / close P)| / M at P",
+    "SUE": "post only: (reported EPS - latest consensus mean with statpers <= P date for the same fiscal period) / close at P"
+  },
+  "filters": {
+    "pre_long": ["none", "R<=0.9", "R<=0.75", "HR>=1.0", "TSw<=1.1"],
+    "pre_short": ["none", "R>=1.0", "R>=1.2", "TSw>=1.15", "HR<=1.0"],
+    "through_long": ["none", "R<=0.9", "R<=0.75", "HR>=1.0", "HR>=1.2", "R<=0.9&HR>=1.0"],
+    "through_short": ["none", "R>=1.0", "R>=1.2", "R>=1.4", "TSw>=1.15", "TSw>=1.3", "D<=1.0", "HR<=0.8", "HR<=1.0", "R>=1.2&HR<=1.0"],
+    "post_iron_fly": ["none", "JM<=1.0", "JM>=1.0"],
+    "post_vertical": ["none", "JM>=1.0", "JM>=1.5"],
+    "post_surprise": ["none", "ASUE>=0.001", "ASUE>=0.003"],
+    "liquidity": ["standard", "tight"]
+  },
+  "samples": {
+    "A_selection": "E in 2018-2021, research5 name half A",
+    "B_cross_section": "E in 2018-2021, name half B",
+    "C_validation": "E in 2022-2023",
+    "D_test": "E in 2024-2025 (stocks end 2025-08-29)",
+    "E_untouched": "Expanded universe, all years: evaluated only after this protocol's frozen file exists and only for frozen policies and the pre-registered replications"
+  },
+  "selection_and_gates": "As research5: eligibility (>=150 issuer-events, >=40 issuers, <=1% unresolved, mean > 0 at 25% cost, mean > 0 excluding best 5), objective = cluster-robust lower 95% bound on A, freeze up to 5 (one per family). Qualification on B, C, D as research5, plus: in E, weekly-bootstrap lower bound > 0 at midpoint and mean > 0 at 25% cost.",
+  "replications": {
+    "note": "Pre-registered mappings of earlier leads onto release-correct timing, reported in every sample including E; not selected here.",
+    "research5_long_straddle": "pre_release long_straddle P-1->P R<=0.9 tight",
+    "research5_long_strangle": "pre_release long_strangle P-1->P R<=0.9 tight",
+    "research6_double_diagonal_put": "through double_diagonal_put_1w P-1->Q D<=1.0 tight",
+    "research6_double_calendar_2w": "through double_calendar_straddle_2w P->hold_front R>=1.2 standard"
+  },
+  "limitations": [
+    "Announcement times are retrospective I/B/E/S records; about a quarter appear inconsistent with the stock reaction day",
+    "Closing midpoint fills assumed; American exercise ignored except the dividend exclusion; settlement at the closing stock price ignores pin and after-hours risk",
+    "Samples A-D were all used by earlier rounds"
+  ]
+}
