@@ -1,0 +1,15 @@
+A. ReLU-cleaned implied move vs raw nearest-strike straddle (7,117 events at P)
+   median |raw/relu - 1| = 0.43%
+   day-to-day noise (median |log change| P-1 to P, 7,062 events): raw 0.0658, relu 0.0650
+   forecasting the release move: raw  Spearman(M, |J|) = 0.3830, R^2(log|J| on log M) = 0.1148, mean |J|/M = 0.874
+   forecasting the release move: relu Spearman(M, |J|) = 0.3833, R^2(log|J| on log M) = 0.1147, mean |J|/M = 0.871
+
+B. Best structure per event under the history-only forecast, held to expiry (return on risk)
+   chosen and filled at bid/ask 2018-21 model edge>0.00: n= 3398 mean=-0.046 (t=-0.89) win=33% | long call 829, long put 641, debit call spread 535
+   chosen and filled at bid/ask 2018-21 model edge>0.25: n= 2091 mean=-0.001 (t=-0.01) win=19% | long call 673, long put 533, debit call spread 413
+   chosen and filled at bid/ask 2022-25 model edge>0.00: n= 3113 mean=-0.055 (t=-1.18) win=37% | debit put spread 534, debit call spread 534, long call 532
+   chosen and filled at bid/ask 2022-25 model edge>0.25: n= 1792 mean=-0.038 (t=-0.47) win=22% | long call 435, long put 409, debit call spread 400
+   chosen and filled at mids    2018-21 model edge>0.00: n= 3573 mean=+0.127 (t=+2.52) win=32% | debit call spread 871, debit put spread 803, long call 573
+   chosen and filled at mids    2018-21 model edge>0.25: n= 2849 mean=+0.186 (t=+3.01) win=27% | debit call spread 761, debit put spread 717, long call 532
+   chosen and filled at mids    2022-25 model edge>0.00: n= 3215 mean=+0.261 (t=+3.78) win=35% | debit call spread 856, debit put spread 804, credit call spread 442
+   chosen and filled at mids    2022-25 model edge>0.25: n= 2521 mean=+0.324 (t=+3.77) win=29% | debit call spread 754, debit put spread 716, long put 339
