@@ -174,12 +174,13 @@ def simulate(cands, rule, pan, ins):
             if hedge == 'hedged':
                 s1 = c['t'] + exit_k
                 path = close[c['t']:s1 + 1, j]
+                net = np.zeros(len(path) - 1)
                 for wi, iv, cp, exd in zip(w, c['iv'], ('C', 'P', 'C', 'P'), (c['fe'], c['fe'], c['be'], c['be'])):
                     T = np.array([max((dt.date.fromisoformat(exd) - days[s]).days, 0) / 365 for s in range(c['t'], s1 + 1)])
-                    dl = wi * O.deltas(path[:-1], c['k'], T[:-1], iv, cp)
-                    hp += float(-np.sum(dl * np.diff(path)))
-                    tr = np.abs(np.diff(np.concatenate([[0.0], dl, [0.0]])))
-                    hc += float(O.HEDGE_COST * np.sum(tr * np.concatenate([path[:-1], [path[-1]]])))
+                    net += wi * O.deltas(path[:-1], c['k'], T[:-1], iv, cp)
+                hp = float(-np.sum(net * np.diff(path)))
+                tr = np.abs(np.diff(np.concatenate([[0.0], net, [0.0]])))  # stock traded = change in the NET delta
+                hc = float(O.HEDGE_COST * np.sum(tr * np.concatenate([path[:-1], [path[-1]]])))
             base = m0.sum()
             trades.append({'tday': dates[c['t']], 'spy': c['secid'] == SPY, 'hold': exit_k,
                            'front': gross_legs[:2].sum() / base, 'back': gross_legs[2:].sum() / base, 'hedge': hp / base,

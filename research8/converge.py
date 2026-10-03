@@ -240,11 +240,10 @@ def simulate(cands, rule, pan, rel, in_sample):
         if hedge == 'hedged':
             path = close[c['t']:s1 + 1, c['j']]
             tau = (c['te'] - np.arange(c['t'], s1 + 1)) / 252.0
-            for iv, cp in zip(c['iv'], 'CP'):
-                dl = O.deltas(path[:-1], c['K'], tau[:-1], iv, cp)
-                hp += float(-np.sum(dl * np.diff(path)))
-                tr = np.abs(np.diff(np.concatenate([[0.0], dl, [0.0]])))
-                hc += float(O.HEDGE_COST * np.sum(tr * np.concatenate([path[:-1], [path[-1]]])))
+            net = sum(O.deltas(path[:-1], c['K'], tau[:-1], iv, cp) for iv, cp in zip(c['iv'], 'CP'))
+            hp = float(-np.sum(net * np.diff(path)))
+            tr = np.abs(np.diff(np.concatenate([[0.0], net, [0.0]])))  # stock traded = change in the NET delta
+            hc = float(O.HEDGE_COST * np.sum(tr * np.concatenate([path[:-1], [path[-1]]])))
         gross = sgn * (m1 - m0 + hp)
         trades.append({'j': c['j'], 'spy': c['secid'] == SPY, 'tday': pan['dates'][c['t']], 'hold': exit_k, 'reason': reason,
                        'm0': m0, 'gap0': sgn * gap0 / m0, 'conv': sgn * ((m1 - f1) - (m0 - f0)) / m0,

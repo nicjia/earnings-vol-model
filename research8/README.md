@@ -17,6 +17,11 @@ option quotes. The market price is only what is paid; fair value is judged by re
 | Daily-panel model-timed vol premium, 96 rules | [protocol_daily.json](protocol_daily.json) | `daily.py` | pre-registered before the data exists; waiting for the pull |
 | Model-timed index put-writing (public CBOE data), 11 rules | [protocol_putwrite.json](protocol_putwrite.json) | `putwrite.py` | **HAR >= 1.5 passed every strong gate on the untouched 2016-2026 test** (Sharpe 1.07, t 2.70) but held only 14 of 129 months; EWMA >= 1.0 failed |
 
+**Hedge-cost note (2026-10-03):** `options2.py`, `prerel.py` and `daily.py` charged delta-hedge costs leg by leg instead of
+on the net position delta, overstating hedge costs (roughly 0.5-1% of premium for straddles). Hedged results in those
+rounds are therefore conservative; no hedged rule there was close to passing at midpoint either. `carry.py` and
+`converge.py` net the deltas.
+
 Generated summary of every round: [docs/research8/SUMMARY.md](../docs/research8/SUMMARY.md).
 
 Splits (user decision): develop on the original 300 names through 2022; untouched test on the 500 expanded names
