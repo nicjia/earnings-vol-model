@@ -1,7 +1,8 @@
 # Strategies
 
 Rules that have passed an untouched out-of-sample test, specified exactly enough to implement.
-This file is updated as new data and tests arrive. Last update: 2026-10-03 (research7 sample E).
+This file is updated as new data and tests arrive. Last update: 2026-10-03 (research8: no new rule passed; see
+`research8/README.md`).
 
 **Status key**
 - **Validated**: passed every pre-registered gate on data no rule was fitted to (research7 sample E: ~500 names never used
@@ -119,6 +120,14 @@ All hold options **before** the release and sell at the **P close**, never throu
 **Why it may work.** Implied volatility tends to rise into earnings while the stock usually moves little before the release.
 With exact release times, 91% of trades (those with small pre-release stock moves) were still profitable on average, so the
 gain is not just from a few large pre-release moves.
+
+## Portfolio of S1-S5 (descriptive, 2026-10-03)
+
+Treating every S1-S5 trade as one unit of risk and averaging trades by entry week (research8/sportfolio.py;
+docs/research8/sportfolio*): annual Sharpe at midpoint 0.9 / 1.9 / 2.2 / 1.3 in samples B / C / D / E, but only
+0.2 / 1.5 / 1.2 / 0.5 at 25% cost and -0.6 / 1.1 / 0.2 / -0.4 at 50% cost. Adding P1 raises E to 0.65 at 25% cost.
+The combination is positive at midpoint everywhere but not robust to realistic fills; this is not a test (every rule
+had already passed E), and only forward paper trading with recorded fills can decide it.
 
 ## Provisional
 

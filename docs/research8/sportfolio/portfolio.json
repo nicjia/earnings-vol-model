@@ -1,0 +1,131 @@
+{
+ "status": "descriptive, not a test (see research8/protocol_sportfolio.json)",
+ "E|S|all": {
+  "mid": {
+   "trades": 2994,
+   "mean_trade": 0.03784222790944176,
+   "weekly_mean": 0.024965292206210247,
+   "sharpe": 1.2874144009100394,
+   "t_block": 2.7965182575430805,
+   "active_weeks": 0.815,
+   "max_drawdown_weeks_sum": 2.3131363926284596,
+   "worst_week": -0.3784017278617711
+  },
+  "c25": {
+   "trades": 2994,
+   "mean_trade": 0.019459861557880664,
+   "weekly_mean": 0.008933184645140787,
+   "sharpe": 0.4739739177488129,
+   "t_block": 1.0254815023784476,
+   "active_weeks": 0.815,
+   "max_drawdown_weeks_sum": 3.325961046061753,
+   "worst_week": -0.396203007518797
+  },
+  "c50": {
+   "trades": 2994,
+   "mean_trade": 0.0010774952063195775,
+   "weekly_mean": -0.007098922915928676,
+   "sharpe": -0.3851198973275974,
+   "t_block": -0.8230206139519373,
+   "active_weeks": 0.815,
+   "max_drawdown_weeks_sum": 4.848834679625845,
+   "worst_week": -0.41631578947368425
+  }
+ },
+ "E|S|dedupe": {
+  "mid": {
+   "trades": 1877,
+   "mean_trade": 0.045643375435936794,
+   "weekly_mean": 0.03004979812211565,
+   "sharpe": 1.31171825264681,
+   "t_block": 3.047575771126348,
+   "active_weeks": 0.7619047619047619,
+   "max_drawdown_weeks_sum": 2.347759041290252,
+   "worst_week": -0.3784017278617711
+  },
+  "c25": {
+   "trades": 1877,
+   "mean_trade": 0.02476953874298053,
+   "weekly_mean": 0.01386780597344312,
+   "sharpe": 0.6221972771030064,
+   "t_block": 1.4185027924542668,
+   "active_weeks": 0.7619047619047619,
+   "max_drawdown_weeks_sum": 3.40191148199711,
+   "worst_week": -0.396203007518797
+  },
+  "c50": {
+   "trades": 1877,
+   "mean_trade": 0.00389570205002427,
+   "weekly_mean": -0.002314186175229412,
+   "sharpe": -0.10609142711111598,
+   "t_block": -0.23857572435064908,
+   "active_weeks": 0.7619047619047619,
+   "max_drawdown_weeks_sum": 4.657156814897633,
+   "worst_week": -0.41631578947368425
+  }
+ },
+ "E|S+P1|all": {
+  "mid": {
+   "trades": 3590,
+   "mean_trade": 0.04530420102996431,
+   "weekly_mean": 0.030479472919504126,
+   "sharpe": 1.4895472718118155,
+   "t_block": 3.382109628337386,
+   "active_weeks": 0.83,
+   "max_drawdown_weeks_sum": 1.6187086390649141,
+   "worst_week": -0.6925752508361205
+  },
+  "c25": {
+   "trades": 3590,
+   "mean_trade": 0.024956206552082517,
+   "weekly_mean": 0.012997005384975202,
+   "sharpe": 0.6470861510494947,
+   "t_block": 1.4595467319837767,
+   "active_weeks": 0.83,
+   "max_drawdown_weeks_sum": 2.197840001857088,
+   "worst_week": -0.7168227424749164
+  },
+  "c50": {
+   "trades": 3590,
+   "mean_trade": 0.004608212074200721,
+   "weekly_mean": -0.004485462149553721,
+   "sharpe": -0.22601246762180166,
+   "t_block": -0.5179310532494481,
+   "active_weeks": 0.83,
+   "max_drawdown_weeks_sum": 4.477011512310589,
+   "worst_week": -0.7410702341137124
+  }
+ },
+ "E|S+P1|dedupe": {
+  "mid": {
+   "trades": 2307,
+   "mean_trade": 0.04741122189486885,
+   "weekly_mean": 0.02939813320592933,
+   "sharpe": 1.2922028842113775,
+   "t_block": 2.886892936414856,
+   "active_weeks": 0.7819548872180451,
+   "max_drawdown_weeks_sum": 1.8859163443530633,
+   "worst_week": -0.6925752508361205
+  },
+  "c25": {
+   "trades": 2307,
+   "mean_trade": 0.02402547110761042,
+   "weekly_mean": 0.011461779549634277,
+   "sharpe": 0.5124183641287804,
+   "t_block": 1.1484167301188748,
+   "active_weeks": 0.7819548872180451,
+   "max_drawdown_weeks_sum": 2.4842390116148003,
+   "worst_week": -0.7168227424749164
+  },
+  "c50": {
+   "trades": 2307,
+   "mean_trade": 0.0006397203203519883,
+   "weekly_mean": -0.0064745741066607725,
+   "sharpe": -0.29230562780478037,
+   "t_block": -0.6463715644047311,
+   "active_weeks": 0.7819548872180451,
+   "max_drawdown_weeks_sum": 5.5529875805689715,
+   "worst_week": -0.7410702341137124
+  }
+ }
+}
