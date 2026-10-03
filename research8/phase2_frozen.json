@@ -1,0 +1,24 @@
+{
+ "frozen_on": "2026-10-03",
+ "model": "HAR_FHS_shrunk",
+ "source": "docs/research8/phase2/dev_HAR_FHS_shrunk.json",
+ "eligible": 5,
+ "rules": [
+  [
+   "P-1",
+   "straddle",
+   "hedged",
+   "sell",
+   "rel",
+   1.1
+  ],
+  [
+   "P-1",
+   "strangle",
+   "hedged",
+   "sell",
+   "rel",
+   1.1
+  ]
+ ]
+}
