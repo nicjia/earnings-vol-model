@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "phase": "research8 skew relative value on phase 2 strangle records",
+  "written_before_any_result": "2026-10-03, before any result of this design",
+  "signal": "skew = (call mid / call model value) / (put mid / put model value), model HAR_FHS_shrunk (phase 1 best_crps)",
+  "position": "if skew >= theta: sell 1 call, buy beta puts (beta = call vega / put vega at entry IVs); if skew <= 1/theta: sell 1 put, buy beta calls (beta = put vega / call vega). Held to expiry; hedged variant delta-hedges both legs daily as in phase 2.",
+  "returns": "P&L / (sold mid + beta x bought mid); costs 0/25/50/100% of quoted half-spreads at entry; $0.65 per contract per side; hedge cost 2 bp",
+  "rules": "label {P-4, P-1, P, Q, Q+1} x hedge {hedged, unhedged} x theta {1.1, 1.25, 1.5} = 30",
+  "samples": "as phase 2",
+  "freeze_rule": "Eligible on dev: >= 200 trades, 25%-cost lower bound > 0, t >= 3.0, positive 25%-cost mean in 2018-2020 and 2021-2022; freeze at most 3 by Sharpe, one per label.",
+  "test_gates": "as phase 2"
+}
