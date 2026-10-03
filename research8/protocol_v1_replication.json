@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "phase": "Out-of-time replication of V1 (HAR >= 1.5 premium-selling timing) on 1990-2006",
+  "written_before_any_result": "2026-10-03. CNDR was downloaded and only its dates and row counts were checked. No SPX-based signal or return before 2007 has been computed in this project.",
+  "rule": "Exactly V1 from STRATEGIES.md: at each monthly roll close (third Friday or the previous session), hold the vehicle to the next roll if VIX/100 / sigma_hat_HAR >= 1.5, else T-bills. sigma_hat_HAR exactly as research8/putwrite.py (walk-forward from 1976 SPX data). No parameter is changed.",
+  "vehicle": "CBOE S&P 500 Iron Condor index (CNDR, daily from 1987): sells one-month OTM SPX put and call spreads at each monthly roll, collateralized. Its monthly return from roll to roll minus the T-bill return is the excess return when held.",
+  "period": "decisions 1990-02-01 (first VIX month with a HAR forecast) to 2006-12-31; nothing after 2006 is used",
+  "costs": "0, 5 and 15 bp of index value per held month; gates at 15 bp (CNDR's spreads are wider than one ATM put, so 15 bp is less conservative here than for PUT)",
+  "benchmark": "'always' = hold CNDR every month",
+  "gates": "Replication succeeds if at 15 bp: (1) block-bootstrap lower bound of the monthly mean > 0, (2) Sharpe >= 1.0, (3) block t >= 2.0, (4) Sharpe above 'always', (5) maximum drawdown no larger than 'always'. Threshold diagnostics (1.0-1.5, HAR and EWMA) are reported for description only.",
+  "interpretation": "Passing on a different vehicle and a disjoint 17-year period would make V1 two independent passes; failing would mean the 2016-2026 pass was likely luck."
+}
