@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "phase": "Weekly crypto option premium selling (BTC, ETH) on Deribit public trade history",
+  "written_before_any_result": "2026-10-03. Only endpoint reachability and field names were checked; no price, trade or return has been downloaded or computed.",
+  "data": "Deribit public API: option trades (history.deribit.com get_last_trades_by_currency_and_time: price in coin, iv, index_price, direction, instrument), delivery prices (get_delivery_prices), daily perpetual closes (get_tradingview_chart_data, BTC-PERPETUAL / ETH-PERPETUAL, 1D). Stored privately; aggregates only in the repo.",
+  "decision": "Every Friday 08:00 UTC (weekly expiry time). Entry window 08:00-10:00 UTC. Underlying reference S0 = median index_price of all option trades of that currency in the window.",
+  "contract": "Options expiring the next Friday at 08:00 UTC (7 days). Strike = the strike nearest S0 among strikes for which both the call and the put have at least one taker-sell trade (direction = 'sell') in the window; if none, the week is skipped and counted.",
+  "entry_price": "per leg, the amount-weighted average price (coin) of taker-sell trades in the window: a seller hitting bids, i.e. an executable short price",
+  "settlement": "payoff in coin = max(D - K, 0) / D for calls and max(K - D, 0) / D for puts, D = Deribit delivery price on the expiry date",
+  "fees": "0.0003 coin per leg trade fee (capped at 12.5% of the leg price) plus 0.00015 coin per leg delivery fee",
+  "returns": "per week, per 1 coin notional: sum over sold legs of (entry price - payoff - fees), in coin (a fraction of notional)",
+  "instruments": "short straddle (call + put); short put",
+  "model": "HAR on daily log returns of the perpetual's 00:00 UTC closes: log(mean squared return over the next 7 days) on logs of mean squared returns over the last 1, 7, 30 and 90 days, least squares refitted each 1 January on pairs ending before it (needs >= 500 pairs); sigma_hat = sqrt(365 x forecast); signal ratio = (mean trade iv of the sold legs / 100) / sigma_hat using the forecast made at the previous 00:00 close",
+  "rules": "coin {BTC, ETH} x instrument {straddle, put} x {always, ratio >= 1.1, ratio >= 1.25, ratio >= 1.5} = 16",
+  "statistics": "weekly series (inactive weeks 0); Sharpe = mean / sd x sqrt(52); moving-block bootstrap of weeks (block 8, 2,000 draws) for the interval and t",
+  "samples": "dev: Fridays 2020-01-01 to 2022-12-31; test: Fridays from 2023-01-01. Earlier Fridays only feed the HAR history.",
+  "freeze_rule": "Per (coin, instrument), freeze the rule with the highest dev Sharpe among the four if its dev block t >= 2.0 (always-selling may be frozen: plain premium selling is itself a candidate). Also report the equal-weight portfolio of all frozen rules.",
+  "test_gates": "Strong for a frozen rule or the portfolio: (1) bootstrap lower bound of the weekly mean > 0, (2) Sharpe >= 1.0, (3) block t >= 2.0, (4) worst week no worse than -3 x the mean annual return (sum of weekly returns per year), (5) positive mean in at least 2 of the test years 2023, 2024, 2025.",
+  "caveats": ["Taker-sell VWAP in a 2-hour window may include trades from much larger or smaller orders than a strategy would place.", "Coin-margined P&L: returns are in coin, not USD; a USD investor also carries the coin's price risk unless hedged.", "Exchange and counterparty risk (Deribit) are not modelled."]
+}
