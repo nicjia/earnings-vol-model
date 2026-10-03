@@ -65,9 +65,11 @@ def build_paths(work, top=None):
         y = days[t].year
         if y not in cache:
             if len(cache) > 1:
-                cache.pop(min(cache))
+                cache.pop(next(iter(cache)))  # evict the least recently used year
             p = os.path.join(work, f'quotes_{y}.pkl')
             cache[y] = pickle.load(open(p, 'rb')) if os.path.exists(p) else {}
+        else:
+            cache[y] = cache.pop(y)  # mark as most recently used
         return cache[y].get((secid, days[t].isoformat()))
 
     cands = []
