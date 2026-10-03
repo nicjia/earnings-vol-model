@@ -47,8 +47,10 @@ def fit_predict(X, y, train, test):
     m = HistGradientBoostingRegressor(loss='absolute_error', max_iter=300, learning_rate=0.05, max_leaf_nodes=15,
                                       min_samples_leaf=100, random_state=0)
     ok = train & np.isfinite(y)
-    m.fit(X[ok], y[ok])
-    return m.predict(X[test])
+    # columns with < 2 distinct finite values in the training rows (e.g. lagged features in the first year) are dropped
+    keep = [c for c in range(X.shape[1]) if len(np.unique(X[ok, c][np.isfinite(X[ok, c])])) >= 2]
+    m.fit(X[ok][:, keep], y[ok])
+    return m.predict(X[test][:, keep])
 
 
 def trade_returns(f, idx, pred, hedged, margin, cost):
