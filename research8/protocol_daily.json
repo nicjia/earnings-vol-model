@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "phase": "research8 daily panel: model-timed volatility premium on SPY and the 40 most liquid names",
+  "written_before_the_data_exists": "2026-10-03 (release research8-daily-2026-10 has not been pulled or downloaded)",
+  "thesis": "The variance premium (implied above realized) is the most persistent option premium in the literature; a stock-only model (phase 1 frozen best_crps HAR_FHS_shrunk, with the release-jump component) should time it: sell when the market price is high relative to the model value, stand aside or buy when it is low.",
+  "data": "nicjia/options-data release research8-daily-2026-10 (data_pulls/wrds_pull.py daily): every session 2016 onward, SPY + 40 names, expiries <= 120 days, strikes 0.7-1.3 x close; plus the research8 stock panel (and SPY daily stocks from the same release) and research7 I/B/E/S release dates for the 40 names.",
+  "decision_dates": "every fifth session of the stock calendar (the phase 1 weekly grid), at the close",
+  "contract": "expiry: the listed expiry with 21-45 calendar days left that is nearest 30 days; ATM straddle (strike nearest spot, both sides quoted). Liquidity per leg: bid > 0, mid >= 0.05, open interest >= 10, (ask - bid)/mid <= 0.25 (SPY: same). Excluded: spot < $10, cash dividend ex-date before expiry (SPY: allowed, its dividend is included in the model's total return and the payoff uses the expiry close; recorded as a caveat), split or data break in the window.",
+  "exits": "hold to expiry (payoff from the expiry close) or close after 5 or 10 sessions at the mid of the same legs (quote required; if missing the trade counts at the next session with quotes, else is dropped and counted)",
+  "hedge": "daily delta hedge at stock closes with entry-IV Black-Scholes deltas, 2 bp of traded notional (variants hedged / unhedged)",
+  "model_value": "phase 1 HAR_FHS_shrunk forecast of the log total return to the exit/expiry close (walk-forward, refit each 1 January from earlier data, nearest-horizon shapes, release jumps known within 30 days), centred so E[S_T] = S; value = E[payoff] for hold-to-expiry; rho = straddle mid / model value at expiry",
+  "signals": "rho; release-in-window flag (a known or projected release of the name before expiry)",
+  "rules": "universe {SPY, single names} x exit {expiry, 5, 10} x hedge {hedged, unhedged} x window {all, no release before expiry} x {sell all, sell rho >= 1.1, sell rho >= 1.25, buy rho <= 0.9} = 96 rules",
+  "returns_costs": "per-share P&L / entry straddle mid; costs 0/25/50/100% of quoted half-spreads at entry and at a mid exit (none at expiry); $0.65 per contract per side",
+  "statistics": "weekly series by decision week (mean across trades that week, 0 if none); Sharpe x sqrt(52); intervals from a moving-block bootstrap of weeks (block 8); t = mean / bootstrap sd",
+  "samples": "dev: decision 2016-01-01 to 2021-12-31 with exit <= 2021-12-31; test: decision >= 2022-01-03. Both untouched until the data is pulled; no part of this release has been seen.",
+  "freeze_rule": "Eligible on dev: >= 150 trades (SPY: >= 100), 25%-cost lower bound > 0, block t >= 3.0 (SPY: >= 2.5), positive 25%-cost mean in 2016-2018 and 2019-2021. Freeze at most 4 by Sharpe, at most one per (universe, exit, direction).",
+  "test_gates": "Strong: 25%-cost lower bound > 0, Sharpe >= 1.0 and block t >= 2.0 at 25% cost, positive at 50% cost, and the worst calendar month (sum of that month's weekly returns at 25% cost) no worse than -3 x the mean annual return (sum of weekly returns per year). Weak: lower bound > 0 only.",
+  "risk_note": "Short-premium rules can lose many times their premium in a crash (2020 is in dev; 2022 in test). Worst trade, worst month and maximum drawdown are reported for every rule."
+}
