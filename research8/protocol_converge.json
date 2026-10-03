@@ -30,5 +30,6 @@
   "statistics": "weekly series by entry week (inactive weeks 0); Sharpe x sqrt(52); weekly-clustered t; hit rate; SPY and single names reported separately as diagnostics",
   "samples": "dev: entries 2016-01-01 to 2021-12-31 with exits by 2021-12-31; test: entries from 2022-01-03",
   "freeze_rule": "Eligible on dev at the 25%-spread level: >= 150 trades, weekly t >= 3.0, Sharpe > 0.8, positive mean in 2016-2018 and 2019-2021. Freeze at most 3 by Sharpe, at most one per (direction, hedge).",
-  "test_gates": "Strong at the 25%-spread level: weekly t >= 2.0, Sharpe >= 1.0, positive mean at full bid/ask, positive in at least 3 of the 4 test years 2022-2025. Every rule is also logged in research8/trials.jsonl."
+  "test_gates": "Strong at the 25%-spread level: weekly t >= 2.0, Sharpe >= 1.0, positive mean at full bid/ask, positive in at least 3 of the 4 test years 2022-2025. Every rule is also logged in research8/trials.jsonl.",
+  "clarification_2026_10_03": "Before any result: at the user's request the universe is SPY plus the 10 most liquid panel names (order of research8_phase2/liquid50.json) instead of all 41, for speed; results widen to more names only if a rule is worth confirming."
 }
