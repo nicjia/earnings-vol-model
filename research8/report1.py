@@ -185,6 +185,26 @@ def markdown(res, picks=None):
     return '\n'.join(L) + '\n'
 
 
+def decision_lines(res):
+    """Compact decision metrics only: top models by each score with intervals, and gates when present."""
+    avg = res['average']
+    out = [f"[{res['sample']}] n per horizon: " + ', '.join(f"{h}={res['horizons'][h]['n']}" for h in res['horizons'])]
+    for key, ci in (('crps_skill', 'crps_skill_ci'), ('log_diff', 'log_diff_ci'), ('tw_skill', 'tw_skill_ci'),
+                    ('release_crps_skill', 'release_crps_skill_ci')):
+        if key not in avg[res['models'][0]]:
+            continue
+        top = sorted(res['models'], key=lambda m: -avg[m][key])[:3]
+        out.append(f"{key}: " + '; '.join(f"{m} {avg[m][key]:+.4f} [{avg[m][ci][0]:+.4f},{avg[m][ci][1]:+.4f}]" for m in top))
+    for m in (res.get('freeze_picks') or {}).values():
+        cov = [res['horizons'][h]['models'][m]['coverage']['0.9'] for h in res['horizons']]
+        out.append(f"{m}: 90% coverage range {min(cov):.3f}-{max(cov):.3f}, group CRPS skill " +
+                   ', '.join(f"{g} {v:+.3f}" for g, v in avg[m]['group_crps_skill'].items()))
+    for c, g in (res.get('gates') or {}).items():
+        out.append(f"GATE {c} {g['model']}: passed={g['passed']} (lb>0 {g['gate1_lower_bound_above_zero']}, "
+                   f"groups {g['gate2_crps_every_group']}, coverage {g['gate3_coverage_90']})")
+    return '\n'.join(out)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('mode', choices=['dev', 'final'])
@@ -215,6 +235,7 @@ def main():
                             f"{g['gate1_lower_bound_above_zero']} | {g['gate2_crps_every_group']} | {g['gate3_coverage_90']} | "
                             f"{g['passed']} |\n")
         print(label, 'written', picks or '')
+        print(decision_lines(res))
 
 
 if __name__ == '__main__':
