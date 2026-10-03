@@ -129,6 +129,33 @@ docs/research8/sportfolio*): annual Sharpe at midpoint 0.9 / 1.9 / 2.2 / 1.3 in 
 The combination is positive at midpoint everywhere but not robust to realistic fills; this is not a test (every rule
 had already passed E), and only forward paper trading with recorded fills can decide it.
 
+## Passed an untouched test, thin evidence (research8, 2026-10-03)
+
+### V1. Index put-writing only when VIX is far above a stock-only vol forecast (HAR >= 1.5)
+
+- **Data/inputs (all public):** SPX daily closes, VIX close, the CBOE S&P 500 PutWrite index (PUT), 3-month T-bill (DTB3).
+- **Model (stock-only):** HAR on SPX's own daily log returns: regress log(mean squared return over the next 21
+  sessions) on logs of mean squared returns over the last 1, 5, 22 and 66 sessions (floors 1e-10), refitted each
+  1 January on all pairs ending before it; forecast = exp(fit) x mean(exp(residual)); sigma_hat = sqrt(252 x forecast).
+- **Decision:** at each monthly roll close (third Friday, or the previous session), if `VIX/100 / sigma_hat >= 1.5`,
+  sell the one-month ATM SPX put (as the PUT index does, cash-secured in T-bills) and hold to the next roll; otherwise
+  hold T-bills.
+- **Results** (excess over T-bills, 15 bp of notional cost per held month; research8/putwrite.py, docs/research8/putwrite):
+
+  | Sample | Months | Held | Sharpe | Block t | Max drawdown | "Always sell" Sharpe / max DD |
+  |---|---|---|---|---|---|---|
+  | Dev 2007-2015 | 107 | 5 | 0.71 | 2.09 | 0.0% | 0.30 / 37.5% |
+  | Test 2016-2026 (untouched) | 129 | 14 | 1.07 | 2.70 | 0.2% | 0.46 / 30.1% |
+
+  It passed every pre-registered strong gate (lower bound > 0, Sharpe >= 1.0, t >= 2.0, above "always", drawdown
+  no larger).
+- **Why it is thin:** only 19 active months in 19 years (7 of the 14 test months in 2021), so the average excess return
+  on capital is small (+0.16% per month) even though it is +1.5% per held month with 93% winning months. Lower
+  thresholds (1.1-1.3) were exposed to a -28% month that 1.5 avoided only because that month's ratio fell between 1.3
+  and 1.5; a single crash month entered at ratio >= 1.5 would dominate the record. The PUT index is a benchmark: real
+  fills, early assignment and margin are not modelled. The companion frozen rule (EWMA >= 1.0) failed the test.
+- **Next step:** forward paper trading with recorded fills; size so that a -30% month on the put notional is tolerable.
+
 ## Provisional
 
 ### P1. Short 2x iron fly, P-4 to Q+4, standard (no filter, or R >= 1.0)

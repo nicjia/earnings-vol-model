@@ -15,6 +15,7 @@ option quotes. The market price is only what is paid; fair value is judged by re
 | Stock trades around releases, 63 rules | [protocol_stockev.json](protocol_stockev.json) | `stockev.py` | no dev-eligible rule |
 | Weekly stock long-short factors, 12 rules | [protocol_factors.json](protocol_factors.json) | `factors.py` | no dev-eligible rule |
 | Daily-panel model-timed vol premium, 96 rules | [protocol_daily.json](protocol_daily.json) | `daily.py` | pre-registered before the data exists; waiting for the pull |
+| Model-timed index put-writing (public CBOE data), 11 rules | [protocol_putwrite.json](protocol_putwrite.json) | `putwrite.py` | **HAR >= 1.5 passed every strong gate on the untouched 2016-2026 test** (Sharpe 1.07, t 2.70) but held only 14 of 129 months; EWMA >= 1.0 failed |
 
 Generated summary of every round: [docs/research8/SUMMARY.md](../docs/research8/SUMMARY.md).
 
