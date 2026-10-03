@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "phase": "research8 weekly long-short stock portfolios from stock-only signals",
+  "written_before_any_result": "2026-10-03, before any result of this design",
+  "signals": {
+    "reversal_z": "minus the past 5-session abnormal return divided by sqrt(5 x EWMA diffusion variance) (phase 1 EWMA, release returns skipped)",
+    "reversal_raw": "minus the past 5-session abnormal return",
+    "lowvol": "minus the EWMA diffusion variance"
+  },
+  "portfolio": "Every fifth session (phase 1 grid), among eligible names of the sample (close >= $5, >= 252 earlier returns), long the top and short the bottom signal quintile, equal weight, hold h sessions; abnormal returns vs the equal-weight panel. ex_release variant drops names with a release session inside the holding window (release dates are the actual ones; only the 30-day-known rule would be available live, so this variant is optimistic for h = 21 and is reported as such). Needs >= 50 eligible names.",
+  "rules": "signal {3} x window {all, ex_release} x hold {5, 21} = 12",
+  "costs": "full turnover of both legs at each rebalance: 4 x c per weekly book, c in {0, 5, 10, 20} bp; overlapping 21-session books each carry 5/21 of capital",
+  "statistics": "weekly series of book returns; Sharpe x sqrt(52); moving-block bootstrap (block 8) for interval and t",
+  "samples": "dev: original names, 2016-01-04 to 2022-12-30; test: expanded names from 2023-01-03; secondary: original names from 2023",
+  "freeze_rule": "Eligible: 10 bp lower bound > 0, block t >= 3.0, positive 10 bp mean in 2016-2019 and 2020-2022; freeze at most 2 by Sharpe, one per signal.",
+  "test_gates": "Strong: 10 bp lower bound > 0, Sharpe >= 1.0 and block t >= 2.0 at 10 bp, positive at 20 bp."
+}
