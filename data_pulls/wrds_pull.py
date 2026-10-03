@@ -11,11 +11,15 @@ Phases (run in order; every phase is resumable and skips files that already exis
   stocks    daily open/high/low/close/volume/return/cfadj, distributions, zero curve
   options   closing option quotes for sessions E-PRE..E+POST around every event, expiries <= E+MAX_DTE days
   manifest  counts, parameters and file hashes
+  daily     (separate, not part of 'all') continuous daily option panel: every session for the most liquid
+            --panel-size names of --original-universe plus SPY, expiries <= --daily-max-dte days,
+            strikes --daily-mny-lo..--daily-mny-hi x close, with stock prices and distributions
 
 Examples:
   python data_pulls/wrds_pull.py --out ~/stock/wrds_studies/research7_data --original-universe ~/stock/wrds_studies/earnings_vol/universe.csv --wrds-user YOURNAME --smoke
   python data_pulls/wrds_pull.py --out ~/stock/wrds_studies/research7_data --original-universe ~/stock/wrds_studies/earnings_vol/universe.csv --wrds-user YOURNAME --names original all
   python data_pulls/wrds_pull.py ... --names expanded all
+  python data_pulls/wrds_pull.py daily --out ~/research8_daily --original-universe ~/universe.csv --wrds-user YOURNAME
 """
 import argparse
 import bisect
@@ -111,6 +115,19 @@ def stream_query(raw, query, path, chunksize):
             if os.path.exists(tmp):
                 os.remove(tmp)
     return rows
+
+
+def daily_sql(table_year, secids, max_dte, mny_lo, mny_hi, columns=QUOTE_REQUIRED + QUOTE_OPTIONAL):
+    return f"""
+select {select_list(columns, 'o.')}
+from optionm_all.opprcd{table_year} o
+join optionm_all.secprd{table_year} s on s.secid = o.secid and s.date = o.date
+where o.secid in ({','.join(str(int(x)) for x in secids)})
+  and o.ss_flag = '0'
+  and o.exdate <= o.date + {int(max_dte)}
+  and o.strike_price >= {mny_lo * 1000:.0f} * abs(s.close)
+  and o.strike_price <= {mny_hi * 1000:.0f} * abs(s.close)
+"""
 
 
 def event_windows(events, sessions, pre, post, max_dte):
@@ -344,6 +361,56 @@ class Puller:
                 rows = self.stream_to_file(options_sql(y, part, self.args.mny_lo, self.args.mny_hi, cols), path)
                 print(f'{os.path.basename(path)}: {rows:,} rows', flush=True)
 
+    # ------------------------------------------------------------------ daily panel
+    def panel(self):
+        import pandas as pd
+        src = pd.read_csv(os.path.expanduser(self.args.original_universe))
+        if 'dollar_volume' not in src.columns:
+            sys.exit('--original-universe must be earnings_vol/universe.csv (it has the dollar_volume column)')
+        top = src.sort_values('dollar_volume', ascending=False).head(self.args.panel_size)[['secid', 'ticker', 'issuer']]
+        if SPY_SECID not in set(top['secid']):
+            top = pd.concat([top, pd.DataFrame([{'secid': SPY_SECID, 'ticker': 'SPY', 'issuer': 'SPDR S&P 500 ETF'}])])
+        return top.reset_index(drop=True)
+
+    def daily(self):
+        os.makedirs(self.path('daily'), exist_ok=True)
+        panel = self.panel()
+        if not os.path.exists(self.path('daily', 'panel.csv')):
+            write_frame(panel, self.path('daily', 'panel.csv'))
+        secids = [int(s) for s in panel['secid']]
+        listed = ','.join(str(s) for s in secids)
+        tables = set(self.db.list_tables(library='optionm_all'))
+        batch = self.args.daily_batch
+        for y in range(self.args.daily_start, self.args.last_year + 1):
+            if f'opprcd{y}' not in tables or f'secprd{y}' not in tables:
+                continue
+            spath = self.path('daily', f'stocks_daily_{y}.csv.gz')
+            if not os.path.exists(spath):
+                cols = self.columns('optionm_all', f'secprd{y}', ('secid', 'date', 'close', 'volume', 'return', 'cfadj'),
+                                    ('open', 'high', 'low', 'shrout'))
+                n = self.stream_to_file(f'select {select_list(cols)} from optionm_all.secprd{y} where secid in ({listed})', spath)
+                print(f'{os.path.basename(spath)}: {n:,} rows', flush=True)
+            cols = self.columns('optionm_all', f'opprcd{y}', QUOTE_REQUIRED + ('ss_flag',), QUOTE_OPTIONAL)
+            cols = [c for c in cols if c != 'ss_flag']
+            for b in range(0, len(secids), batch):
+                path = self.path('daily', f'quotes_daily_{y}_b{batch}_{b // batch:03d}.csv.gz')
+                if os.path.exists(path):
+                    continue
+                sql = daily_sql(y, secids[b:b + batch], self.args.daily_max_dte, self.args.daily_mny_lo, self.args.daily_mny_hi, cols)
+                n = self.stream_to_file(sql, path)
+                print(f'{os.path.basename(path)}: {n:,} rows', flush=True)
+        dpath = self.path('daily', 'distributions_daily.csv.gz')
+        if not os.path.exists(dpath):
+            cols = self.columns('optionm_all', 'distrd', ('secid', 'ex_date', 'amount'),
+                                ('declare_date', 'record_date', 'payment_date', 'distr_type', 'frequency', 'cancel_flag', 'adj_factor'))
+            self.stream_to_file(f"select {select_list(cols)} from optionm_all.distrd where secid in ({listed}) "
+                                f"and ex_date >= '{self.args.daily_start - 2}-01-01'", dpath)
+        zpath = self.path('daily', 'zero_curve.csv.gz')
+        if not os.path.exists(zpath):
+            self.stream_to_file(f"select date, days, rate from optionm_all.zerocd where date >= '{self.args.daily_start}-01-01' "
+                                'and days <= 400', zpath)
+        self.manifest()
+
     # ------------------------------------------------------------------ manifest
     def manifest(self):
         files = []
@@ -365,7 +432,7 @@ class Puller:
 
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument('phases', nargs='+', choices=PHASES + ('all',))
+    p.add_argument('phases', nargs='+', choices=PHASES + ('daily', 'all'))
     p.add_argument('--out', required=True)
     p.add_argument('--original-universe', required=True, help='earnings_vol/universe.csv from the existing cache')
     p.add_argument('--wrds-user')
@@ -382,8 +449,14 @@ def main(argv=None):
     p.add_argument('--mny-hi', type=float, default=1.4)
     p.add_argument('--batch', type=int, default=10, help='securities per option query')
     p.add_argument('--smoke', action='store_true', help='3 names, latest year only: check access and SQL quickly')
+    p.add_argument('--panel-size', type=int, default=40, help='daily: most liquid names by Dec-2017 dollar volume (+ SPY)')
+    p.add_argument('--daily-start', type=int, default=2016)
+    p.add_argument('--daily-max-dte', type=int, default=120)
+    p.add_argument('--daily-mny-lo', type=float, default=0.7)
+    p.add_argument('--daily-mny-hi', type=float, default=1.3)
+    p.add_argument('--daily-batch', type=int, default=4, help='daily: securities per option query')
     args = p.parse_args(argv)
-    phases = PHASES if 'all' in args.phases else [x for x in PHASES if x in args.phases]
+    phases = PHASES if 'all' in args.phases else [x for x in PHASES + ('daily',) if x in args.phases]
     puller = Puller(args)
     for phase in phases:
         print(f'== {phase}', flush=True)

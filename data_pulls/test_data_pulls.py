@@ -105,6 +105,13 @@ class PullHelpers(unittest.TestCase):
             self.assertTrue(raw.driver_connection.closed)
             self.assertEqual(os.listdir(tmp), ['q.csv.gz'])
 
+    def test_daily_sql(self):
+        sql = wrds_pull.daily_sql(2019, [101310, 109820], 120, 0.7, 1.3)
+        self.assertIn('optionm_all.opprcd2019 o', sql)
+        self.assertIn('o.secid in (101310,109820)', sql)
+        self.assertIn('o.exdate <= o.date + 120', sql)
+        self.assertIn('1300 * abs(s.close)', sql)
+
     def test_columns_skip_missing_optional_and_require_required(self):
         class FakeDB:
             def describe_table(self, library, table):
