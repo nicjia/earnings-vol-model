@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "phase": "research8 convergence engine on the daily panel: enter when an option is cheap (or rich) against the stock-only fair value, re-evaluate fair value every session, exit on convergence or a stop",
+  "written_before_any_result": "2026-10-03, after downloading research8-daily-2026-10 and while the protocol_daily pipeline was building; no quote-based result from this release had been computed or seen",
+  "data": "research8-daily-2026-10 (SPY + 40 names, every session 2016-2025, expiries <= 120 days, strikes 0.7-1.3 x close), research8 stock panel, research7 release dates",
+  "contract": "At each session and name: the listed expiry with 21-45 calendar days left nearest 30; ATM straddle (strike nearest spot with both sides quoted); each leg bid > 0, mid >= 0.05, open interest >= 10, (ask - bid)/mid <= 0.25. Cash dividend ex-date before expiry excludes single names (SPY allowed). Once entered, the same contracts are followed.",
+  "fair_value": "phase 1 HAR_FHS_shrunk (walk-forward, refit each 1 January from earlier data: original names through 2021, all names after) forecast of the log total return from the current close to the expiry close, centred so E[S_T] = S; fair = E[|S_T - K|]. Recomputed every session from data up to that close.",
+  "signals": {
+    "rho": "straddle mid / fair",
+    "percentile": "rank of today's rho among the same name's rho values on its previous 252 sessions with a candidate straddle (needs >= 60)"
+  },
+  "entry": {
+    "buy_cheap": "percentile <= 25%",
+    "sell_rich": "percentile >= 75%",
+    "edge_gate_variant": "additionally buy only if fair >= ask + fees per share; sell only if bid >= fair + fees per share"
+  },
+  "exit": {
+    "target_full": "long: bid >= current fair; short: ask <= current fair",
+    "target_half": "long: bid >= entry mid + 50% of the initial gap (fair0 - mid0); short mirrored",
+    "time_stop": "held max_hold sessions (5 or 10)",
+    "event_guard": "close at the session before any release session of the name",
+    "expiry_guard": "close when 5 or fewer sessions remain to expiry",
+    "missing_quote": "if either leg is unquoted on a session, conditions are checked at the next quoted session; the trade is dropped and counted if no quote exists before expiry"
+  },
+  "position_rule": "one open position per name and rule; a new entry only after the previous trade has closed",
+  "hedge": "variants hedged (daily delta hedge at stock closes with entry-IV Black-Scholes deltas, 2 bp of traded notional) and unhedged",
+  "rules": "direction {buy_cheap, sell_rich} x entry {percentile, percentile + edge gate} x target {full, half} x max_hold {5, 10} x hedge {hedged, unhedged} = 32 rules",
+  "returns": "P&L per share / entry mid, at three execution levels: mid (primary), 25% of the quoted half-spread at entry and exit, and full bid/ask. Fees $0.65 per contract per side reported separately.",
+  "attribution": "per trade (entry-mid units, signed by direction): initial gap; convergence captured = change in (mid - fair); fair-value drift = change in fair; hedge P&L; spreads; fees; hedge cost; exit reason; sessions held. Reported as means per rule so the source of any loss is visible.",
+  "statistics": "weekly series by entry week (inactive weeks 0); Sharpe x sqrt(52); weekly-clustered t; hit rate; SPY and single names reported separately as diagnostics",
+  "samples": "dev: entries 2016-01-01 to 2021-12-31 with exits by 2021-12-31; test: entries from 2022-01-03",
+  "freeze_rule": "Eligible on dev at the 25%-spread level: >= 150 trades, weekly t >= 3.0, Sharpe > 0.8, positive mean in 2016-2018 and 2019-2021. Freeze at most 3 by Sharpe, at most one per (direction, hedge).",
+  "test_gates": "Strong at the 25%-spread level: weekly t >= 2.0, Sharpe >= 1.0, positive mean at full bid/ask, positive in at least 3 of the 4 test years 2022-2025. Every rule is also logged in research8/trials.jsonl."
+}
