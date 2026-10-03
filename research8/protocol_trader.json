@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "phase": "research8 approach T (direct trader) on the phase 2 records",
+  "written_before_any_result": "2026-10-03 (before any phase 2, ruler or trader result)",
+  "target": "short-premium return at midpoint of each straddle/strangle record held to expiry: (mid - payoff [- hedge P&L]) / mid, for the hedged and unhedged variants",
+  "features": "label, structure, release timing, sessions to expiry, implied move M, log rho and rho_rel (phase 1 best_crps model), half-spread / mid, log spot, mean entry implied vol, the mean hedged and unhedged short-premium returns of the same name/label/structure over its last <= 8 earlier records whose expiry is on or before the decision close and their count, log(model value / spot)",
+  "learner": "sklearn HistGradientBoostingRegressor(loss='absolute_error', max_iter=300, learning_rate=0.05, max_leaf_nodes=15, min_samples_leaf=100, random_state=0)",
+  "walk_forward": "dev: for each year 2019-2022, train on dev records (original names, expiry <= 2022-12-30) with expiry before 1 January of that year; predict dev records decided in that year. test: for 2023-2025, train on all records (any name) with expiry before 1 January; predict expanded-name records decided that year.",
+  "decision": "sell if prediction > (0.25 x half-spread + fees)/mid + margin; buy if -prediction > the same; else no trade. margin in {0, 0.05, 0.10, 0.20}; hedge in {hedged, unhedged} = 8 rules",
+  "returns_costs_statistics": "as protocol_phase2.json",
+  "freeze_rule": "Eligible on dev (out-of-sample 2019-2022): >= 200 trades, 25%-cost bootstrap lower bound > 0, weekly t >= 3.0, positive 25%-cost mean in 2019-2020 and 2021-2022. Freeze at most 2 by 25%-cost Sharpe.",
+  "test_gates": "as phase 2 (strong / weak)"
+}
