@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "phase": "research8 phase 1: stock return distribution models",
+  "written_before_any_score": "2026-10-03",
+  "purpose": "Forecast the full distribution of a stock's log total return from a close to 1-63 sessions later, using stock history and the earnings calendar only (no option quotes). Phase 2 turns the frozen distribution(s) into option values. This phase is scored by forecast accuracy only; it makes no trading claim.",
+  "user_decisions": {
+    "split": "names x time: develop on the original 300 names through 2022; untouched test on the 500 expanded names from 2023 (user choice, 2026-10-03)",
+    "scores": "try many: report every score below for every model; freeze the dev winner of each primary score (user choice)",
+    "release_dates": "an upcoming release date is known when it is at most 30 calendar days after the forecast date; otherwise it is projected (user choice)"
+  },
+  "data": {
+    "stocks": "OptionMetrics daily open/high/low/close/return/cfadj from research7-data-2026-10 (original 300) and research7-expanded-2026-10 (expanded 500), 2014-01-02 to 2025-08-29",
+    "events": "I/B/E/S quarterly EPS announcement date and time from the same releases (events_original/events_expanded), 2014 onward",
+    "sessions": "sessions.csv of each release (union)"
+  },
+  "returns": {
+    "daily": "r_t = log(1 + return_t), OptionMetrics total return (split-adjusted, dividends included)",
+    "intraday": "id_t = log(|close_t| / open_t) when open, high, low > 0; else missing",
+    "overnight": "on_t = r_t - id_t (contains dividends and any overnight news)",
+    "range_variance": "gk_t = 0.5 log(high_t/low_t)^2 - (2 log 2 - 1) id_t^2 (Garman-Klass intraday variance), missing when id_t is",
+    "target": "R_{t,h} = sum of r over the h sessions after the origin close t; requires every one of those returns to exist"
+  },
+  "release_days": {
+    "rule": "Release timing as research7: before open -> release return is the session of the announcement date; after close -> the next session; non-session announcement date -> the first session after it; during the session -> the announcement-date session. One release per security and fiscal period end (earliest announcement).",
+    "release_return": "J = r on the release session (close P to close Q)",
+    "diffusion_days": "every other session; release-session returns are excluded from all diffusion estimates and diffusion targets",
+    "known_at_origin": "For origin t, the next release is used at its actual session if its announcement date is <= t + 30 calendar days. Otherwise the release is projected at the first session on or after (last known announcement date + 91 calendar days), repeated as needed. If no earlier release exists, none is projected.",
+    "in_window": "A forecast for horizon h includes a jump component for each known or projected release session inside (t, t+h]."
+  },
+  "samples": {
+    "dev": "original-group names; origins whose target session is <= 2022-12-30; first origin 2016-01-04",
+    "test": "expanded_2017 and added_2020 names; origins >= 2023-01-03 with a complete target (data end 2025-08-29). Untouched: no score of any kind has been computed on it before freezing.",
+    "secondary_after_freeze": "Reported only after freezing, never used to choose: original names with origins >= 2023-01-03 (time holdout) and expanded names with targets <= 2022-12-30 (name holdout).",
+    "origins": "Every fifth session counted from 2014-01-02 (a fixed weekly grid), plus every release forecast below. Eligible when the origin close is >= $5 and the name has >= 252 earlier sessions with returns.",
+    "release_forecasts": "For every release with a known P close: a 1-session forecast from the P close of the release return J (scored separately as 'release day')."
+  },
+  "horizons_sessions": [1, 2, 5, 10, 21, 42, 63],
+  "estimation": {
+    "walk_forward": "Pooled parameters are re-estimated at each 1 January from data dated before it whose targets are realized before it; forecasts during that year use those parameters plus each name's data up to the origin close.",
+    "dev_training_names": "original names only",
+    "test_training_names": "all 800 names (data before each refit date)",
+    "dev_years": "2016-2022",
+    "test_years": "2023-2025"
+  },
+  "components": {
+    "diffusion_variance": {
+      "EWMA": "Daily variance on diffusion days: seed with the mean of the first 20 squared returns, then var = 0.94 var + 0.06 r^2 (release returns skipped). Horizon variance = n_d x var, n_d = diffusion sessions in the window.",
+      "GARCH": "GJR-GARCH(1,1) on diffusion days, var_{t+1} = w + (a + g 1[r_t<0]) r_t^2 + b var_t, with variance targeting w = (1 - a - g/2 - b) LR where LR is the name's mean squared diffusion return over its last 504 sessions. a, g, b and the Student-t df are pooled across training names (quasi-ML). Horizon variance sums the multi-step forecasts LR + p^(k-1)(var_{t+1} - LR), p = a + g/2 + b, over diffusion sessions.",
+      "HAR": "Per horizon h, pooled least squares of log(mean future diffusion proxy) on logs of overnight-squared means over 5/22/66 sessions and Garman-Klass means over 1/5/22/66 sessions, where the daily proxy is on_t^2 + gk_t. Forecast daily variance = exp(fit) x mean(exp(residual)) (smearing), horizon variance = n_d x that."
+    },
+    "shape": {
+      "calibration": "Every shape is fitted to standardized diffusion returns z = D_{t,h} / sqrt(horizon variance) from training data, per horizon, where D is the target minus any release returns inside the window. This also corrects any scale bias of the variance model.",
+      "Gauss": "Normal with the training standard deviation of z",
+      "T": "Student-t fitted to z by maximum likelihood (df, location 0, scale)",
+      "FHS": "Empirical quantiles of the training z (filtered historical simulation), with pooled z from the most recent 5 years of training data"
+    },
+    "jump": {
+      "none": "No separate release component (releases treated as ordinary days; note the diffusion variance still excludes release returns, so 'none' measures the cost of ignoring the calendar)",
+      "name": "J drawn uniformly from the name's last 8 release returns (need >= 4); with fewer, use 'shrunk'",
+      "shrunk": "J = s_J x u, where s_J^2 = (n m + k0 c v) / (n + k0): n = number of the name's last 8 release returns, m = their mean square, v = the diffusion daily variance at the origin, c = pooled training mean of J^2 / v at P, k0 = 4; u drawn from the pooled training standardized jumps J / s_J (with s_J computed as of each P)."
+    },
+    "combination": "For each forecast the distribution of D + sum of jumps is formed from 4,000 stratified diffusion draws paired with randomly ordered jump draws (fixed seed); quantiles are read from the combined draws. Without a jump the shape quantiles are scaled directly."
+  },
+  "candidates": {
+    "B0_EWMA_raw_Gauss": "Baseline: EWMA 0.94 on all returns including releases, Normal with variance h x var, no calibration and no calendar",
+    "B1_HS_name": "Baseline: empirical quantiles of the name's own overlapping h-session returns over the last 504 sessions (unfiltered historical simulation)",
+    "grid": "diffusion {EWMA, GARCH, HAR} x shape {Gauss, T, FHS} x jump {none, name, shrunk} = 27 models",
+    "GBQ": "Gradient-boosted quantiles: sklearn HistGradientBoostingRegressor (loss=quantile, max_iter 300, learning_rate 0.05, max_leaf_nodes 31, min_samples_leaf 200, seed 0) per horizon and level 0.01/0.05/0.10/0.25/0.50/0.75/0.90/0.95/0.99, fitted on weekly-grid training origins to y = R_{t,h} / sqrt(h x EWMA var). Features: log EWMA var; log 5/22/66-session means of on^2 and gk; log 252-session mean squared diffusion return; 22- and 66-session returns divided by EWMA vol; known/projected release in window (0/1); sessions to that release / h; log(s_J^2 / v) from 'shrunk'; n of name release history; log close. Predicted quantiles are sorted, then interpolated linearly in standard-normal score with linear tail extension to the full grid.",
+    "count": "29 candidates plus 2 baselines (31 models)"
+  },
+  "representation": "Every model outputs quantiles at levels 0.001, 0.0025, 0.005, 0.01, 0.02, ..., 0.98, 0.99, 0.995, 0.9975, 0.999 (105 levels).",
+  "scores": {
+    "CRPS": "Quantile-score approximation: CRPS = 2 x trapezoid integral over the level grid of the pinball loss. Reported as skill 1 - mean(model)/mean(B0) per horizon.",
+    "twCRPS": "Same with level weight (2 tau - 1)^2 (tail-weighted, Gneiting-Ranjan)",
+    "log_score": "Log density at the outcome from a piecewise-linear CDF through the quantiles, with exponential tails beyond 0.001/0.999 matching the outer interval's density; reported as mean difference from B0 (nats)",
+    "PIT": "Interpolated CDF value at the outcome; reported as coverage of central 50/80/90/98% intervals and the maximum absolute deviation of the PIT histogram (20 bins) from uniform",
+    "abs_move": "Predicted E|R| (mean of |quantile| over a uniform level sub-grid) against realized |R|: ratio of means realized/predicted and mean squared error of |R| (what an ATM straddle pays)",
+    "inference": "Differences from B0 and from the dev-best model: means with 95% intervals from a bootstrap over calendar weeks of the origin (2,000 draws, seed 20261003)."
+  },
+  "horizon_groups": {"short": [1, 2, 5], "medium": [10, 21], "long": [42, 63], "release_day": "the release forecasts"},
+  "freeze_rule": "On dev, freeze at most four distinct models: the best mean CRPS skill averaged over the seven horizons; the best mean log-score difference averaged over the seven horizons; the best mean twCRPS skill averaged over the seven horizons; and the best release-day CRPS. Ties keep the simpler model (fewer components, grid before GBQ). Frozen specs, with every dev score, are committed before the test data are scored.",
+  "test_gates": "A frozen model passes for its own score if on test (1) its improvement over B0 on that score has a weekly-bootstrap 95% lower bound above zero, (2) it also improves on B0 in CRPS at every horizon group, and (3) central 90% interval coverage is within 0.85-0.95 at every horizon. All 31 models are reported on test as diagnostics; only frozen ones can pass.",
+  "outputs": "Aggregate tables only in docs/research8/phase1 (public). Per-forecast scores stay in a private directory; their SHA-256 values are recorded.",
+  "known_limitations": [
+    "I/B/E/S announcement times are retrospective, not a point-in-time calendar.",
+    "Quarter-ahead release dates beyond 30 days are projected crudely (+91 days).",
+    "Dev names overlap the names used by research4-7 option studies; their stock-distribution forecasts were never scored there.",
+    "Close-to-close horizons only; intraday option exits are not modelled in this phase."
+  ]
+}
