@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "phase": "research8 stock trades around earnings releases (no options)",
+  "written_before_any_result": "2026-10-03, before any result of this design (no stock-direction returns around releases have been computed in this project)",
+  "data": "research8 panel (800 names, 2014-2025) and research7 events (I/B/E/S EPS, consensus mean at P, release timing P/Q)",
+  "abnormal_return": "log total return minus the equal-weight mean log return of all panel names that session (live analogue: an index ETF hedge)",
+  "signals": {
+    "SUE": "(EPS - consensus mean at P) / close at P; long if >= the 80th and short if <= the 20th percentile of SUE over events with Q in the previous 365 days (dev: original names; final: all names), needing >= 200 such events",
+    "J": "abnormal log return from the P close to the Q close (the release reaction)",
+    "JZ": "J / sqrt(mean of the name's last 8 earlier J^2), needing >= 4"
+  },
+  "families": {
+    "sue": "direction by SUE quintile",
+    "drift": "direction sign(J) when |JZ| >= z",
+    "fade": "direction -sign(J) when |JZ| >= z",
+    "agree": "SUE extreme and sign(J) agree; direction that sign",
+    "premium": "long from the P-k close to the P close (pre-announcement), all events"
+  },
+  "rules": "entry close {Q, Q+1} x hold {5, 10, 20, 40, 60} sessions for sue/drift/fade/agree, z {1, 2} for drift/fade; premium k {1, 5, 10}; 63 rules. Spot at P >= $5.",
+  "returns_costs": "direction x summed abnormal log return from entry close to exit close, minus 2 x cost per side, cost in {0, 5, 10, 20} bp; gates use 10 bp per side",
+  "statistics": "Weekly series by entry week over every week in the sample span (inactive weeks 0). Sharpe = mean / sd x sqrt(52). Interval and t from a moving-block bootstrap of weeks (block 8, 2,000 draws; t = mean / bootstrap sd).",
+  "samples": "dev: original names, entry >= 2015-01-01 and exit <= 2022-12-30; test: expanded names with entry >= 2023-01-03; secondary: original names from 2023",
+  "freeze_rule": "Eligible on dev: >= 300 trades, 10 bp weekly-mean lower bound > 0, block t >= 3.0, positive 10 bp mean in 2015-2018 and in 2019-2022. Freeze at most 3 by Sharpe, at most one per family.",
+  "test_gates": "Strong: (1) 10 bp weekly-mean lower bound > 0, (2) Sharpe >= 1.0 at 10 bp, (3) block t >= 2.0 at 10 bp, (4) mean > 0 at 20 bp per side. Weak: (1) only.",
+  "prior_exposure": "Expanded names' stock data was used for phase 1 distribution scoring and research7 option signals, never for direction returns around releases."
+}
