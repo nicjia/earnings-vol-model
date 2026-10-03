@@ -42,7 +42,8 @@ def lg(x):
 class Prepared:
     """Panel-wide matrices and the origin table."""
 
-    def __init__(self, panel):
+    def __init__(self, panel, extra=None):
+        """extra: optional (t, j) arrays of additional origins (kind 2, e.g. option decision closes)."""
         self.p = panel
         r, rel = panel['r'], panel['rel']
         self.dates = panel['dates']
@@ -78,9 +79,10 @@ class Prepared:
         q, ej = panel['ev_q'], panel['ev_j']
         keep = q >= 1
         rt, rj = q[keep] - 1, ej[keep]
-        t = np.concatenate([gt, rt])
-        j = np.concatenate([gj, rj])
-        kind = np.concatenate([np.zeros(len(gt), int), np.ones(len(rt), int)])
+        xt, xj = (np.asarray(extra[0], int), np.asarray(extra[1], int)) if extra is not None else (np.zeros(0, int), np.zeros(0, int))
+        t = np.concatenate([gt, rt, xt])
+        j = np.concatenate([gj, rj, xj])
+        kind = np.concatenate([np.zeros(len(gt), int), np.ones(len(rt), int), np.full(len(xt), 2)])
         ok = self.eligible[t, j] & (self.dates[t] >= dt.date(2015, 1, 1).toordinal())
         self.t, self.j, self.kind = t[ok], j[ok], kind[ok]
         self.offs, self.hist = F.release_inputs(panel, self.t, self.j)
@@ -90,7 +92,8 @@ class Prepared:
         self.group = panel['group'][self.j]
 
     def k_fcst(self, idx, h):
-        return (self.offs[idx] <= h).sum(1)
+        h = np.asarray(h)
+        return (self.offs[idx] <= (h[:, None] if h.ndim else h)).sum(1)
 
 
 def sample_tag(prep, idx, h):
@@ -113,7 +116,7 @@ def sample_tag(prep, idx, h):
 class YearModel:
     """Everything fitted at one refit date (1 January of `year`) from training names' earlier data."""
 
-    def __init__(self, prep, year, train_names, log):
+    def __init__(self, prep, year, train_names, log, gbq=True):
         self.prep, self.year = prep, year
         d = prep.dates
         self.refit = int(np.searchsorted(d, dt.date(year, 1, 1).toordinal()))
@@ -160,7 +163,7 @@ class YearModel:
                         zz = z[recent] if s == 'FHS' else z
                         self.shapes[m, s, jf, h] = dist.Shape(s, zz[np.isfinite(zz)])
                     self.tables[m, s, h] = dist.jump_table(self.shapes[m, s, 'jump', h], self.upool, seed=year * 100 + h)
-        self.gbq = self.fit_gbq(tn, log)
+        self.gbq = self.fit_gbq(tn, log) if gbq else None
         log(f'{year}: fitted ({time.time() - t0:.0f}s)')
 
     def sj2(self, idx):
@@ -173,8 +176,9 @@ class YearModel:
         p = self.prep
         return np.column_stack([x[p.t[idx], p.j[idx]] for x in p.har_x])
 
-    def hvar(self, m, idx, h, n):
-        """Horizon diffusion variance for n diffusion sessions out of h."""
+    def hvar(self, m, idx, h, n, hb=None):
+        """Horizon diffusion variance for n diffusion sessions out of h (hb: fitted horizon used for HAR)."""
+        hb = h if hb is None else hb
         p = self.prep
         t, j = p.t[idx], p.j[idx]
         ew = p.v_ewma[t, j]
@@ -185,12 +189,13 @@ class YearModel:
             lr = p.lr[t, j]
             out = F.garch_horizon(st, lr, self.theta, h, n / h)
             return np.where(np.isfinite(out) & (out > 0), out, n * ew)
-        beta, smear = self.har[h]
+        beta, smear = self.har[hb]
         X = self.har_X(idx)
         daily = np.exp(np.c_[np.ones(len(idx)), X] @ beta) * smear
         return np.where(np.isfinite(daily), n * daily, n * ew)
 
     def gbq_X(self, idx, h):
+        h = np.asarray(h, float)
         p = self.prep
         t, j = p.t[idx], p.j[idx]
         v = p.v_ewma[t, j]
@@ -217,7 +222,10 @@ class YearModel:
         return out
 
     # ------------------------------------------------------------------ forecasts
-    def quantiles(self, model, idx, h, rng):
+    def quantiles(self, model, idx, h, rng, hb=None):
+        """Quantiles of the h-session log return. h may be a vector (any horizon) when hb, the nearest fitted
+        horizon, is given: shapes, jump tables, HAR and GBQ coefficients come from hb, variances use h."""
+        hb = h if hb is None else hb
         p = self.prep
         t, j = p.t[idx], p.j[idx]
         n = len(idx)
@@ -237,16 +245,16 @@ class YearModel:
             return Q
         if model == 'GBQ':
             X = self.gbq_X(idx, h)
-            q = np.column_stack([m.predict(X) for m in self.gbq[h]])
+            q = np.column_stack([m.predict(X) for m in self.gbq[hb]])
             return dist.normal_score_interp(GBQ_LEVELS, q) * np.sqrt(h * p.v_ewma[t, j])[:, None]
         m, s, jm = model.split('_')
         if jm == 'none':
-            sd = np.sqrt(self.hvar(m, idx, h, np.full(n, h)))
-            return sd[:, None] * self.shapes[m, s, 'none', h].ppf(dist.LEVELS)[None, :]
+            sd = np.sqrt(self.hvar(m, idx, h, np.full(n, h) * 1.0, hb))
+            return sd[:, None] * self.shapes[m, s, 'none', hb].ppf(dist.LEVELS)[None, :]
         k = p.k_fcst(idx, h)
         nd = h - k
-        shape = self.shapes[m, s, 'jump', h]
-        sd = np.sqrt(self.hvar(m, idx, h, np.maximum(nd, 1))) * (nd >= 1)
+        shape = self.shapes[m, s, 'jump', hb]
+        sd = np.sqrt(self.hvar(m, idx, h, np.maximum(nd, 1), hb)) * (nd >= 1)
         Q = np.empty((n, len(dist.LEVELS)))
         z0 = shape.ppf(dist.LEVELS)
         Q[k == 0] = sd[k == 0, None] * z0[None, :]
@@ -256,7 +264,7 @@ class YearModel:
         Q[a] = sj[a, None] * np.quantile(self.upool, dist.LEVELS)[None, :]
         b = (k == 1) & ~use_name & (nd >= 1)
         if b.any():
-            Q[b] = sd[b, None] * dist.table_lookup(self.tables[m, s, h], sj[b] / sd[b])
+            Q[b] = sd[b, None] * dist.table_lookup(self.tables[m, s, hb], sj[b] / sd[b])
         c = (k >= 2) & ~use_name
         zs = shape.ppf(dist.stratified(NAME_DRAWS))
         for rows in np.array_split(np.where(c)[0], max(1, int(c.sum()) // 4000 + 1)):

@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "phase": "research8 phase 2 (A0): stock-only option values against market prices around releases",
+  "written_before_any_phase2_result": "2026-10-03",
+  "thesis": "Value options from stock behaviour alone (phase 1 distribution, centred so E[S_T] = S). The market price is only what is paid. Trade when price and model value differ; judge by realized payoffs and after-cost P&L.",
+  "model": "The phase 1 model frozen as best_crps (research8/phase1_frozen.json), walk-forward as in phase 1 (refit each 1 January; original-name training through 2022, all names from 2023). Horizons other than 1/2/5/10/21/42/63 use the nearest fitted horizon (log distance) for shapes, jump tables and HAR coefficients and the exact session count for variances. Robustness only (never selection): the best_tw model and B0.",
+  "records": {
+    "source": "research7 quote caches (original names: research7-data-2026-10; expanded names: research7-expanded-2026-10), closing bid/ask and open interest",
+    "decision_closes": "P-4, P-1, P (held through the release) and Q, Q+1 (after the release)",
+    "expiry": "pre-release labels: first expiry with Q <= exdate <= Q + 10 days; post-release labels: first expiry with decision + 5 <= exdate <= decision + 35 days",
+    "structures": "straddle: ATM call and put (strike nearest spot with both sides quoted); strangle: call strictly above spot nearest S(1 + 0.5M), put strictly below nearest S(1 - 0.5M), M = straddle mid / spot",
+    "liquidity": "every leg: bid > 0, mid >= 0.05, open interest >= 10, (ask - bid)/mid <= 0.25",
+    "exclusions": "spot < $10; cash dividend ex-date in (decision, expiry]; any split or data break (log close ratio differs from summed total returns by > 0.02); legs whose mid is at or below intrinsic (no implied vol)",
+    "holding": "to expiry; payoff from the stock close on the last session on or before the expiry date",
+    "hedge": "daily at stock closes with Black-Scholes deltas at each leg's entry implied vol (r = 0, time in sessions / 252), unwound at expiry; hedge cost 2 bp of traded stock notional"
+  },
+  "signals": {
+    "rho": "market mid of the structure / model value of the structure",
+    "rho_rel": "rho / median rho of the same name, label and structure at its last <= 8 earlier records whose expiry close is on or before this decision close (need >= 4); uses lagged option prices only"
+  },
+  "returns": "per-share P&L divided by the structure's market mid: direction x (payoff - mid [+ hedge P&L]) - cost x half-spread (entry only; expiry settles) - $0.0130 fees - hedge cost; cost in {0, 25%, 50%, 100%} of the quoted half-spread",
+  "rules": "label {5} x structure {2} x hedge {hedged, unhedged} x {sell all, buy all, sell rho >= 1.1/1.25/1.5/2.0, buy rho <= 0.9/0.8/0.67/0.5, sell rho_rel >= 1.1/1.25/1.5, buy rho_rel <= 0.9/0.8/0.67} = 320 rules",
+  "samples": {
+    "dev": "original names, expiry close <= 2022-12-30",
+    "test": "expanded names, decision close >= 2023-01-03",
+    "secondary_after_freeze": "original names with decision close >= 2023-01-03",
+    "prior_exposure": "Not pristine for option outcomes: research7 sample E (expanded names, 2018-2025) was evaluated once for six earlier hypotheses (pre-release long straddles/strangles exited at P, short 2x iron flies P-4 to Q+4). The phase 2 rules are different (model-conditioned, held to expiry, delta-hedged) but outcomes of related trades on these names were seen."
+  },
+  "statistics": "Weekly series: each calendar week's return is the mean return of trades decided that week (0 if none). Sharpe = mean / sd x sqrt(52); t = mean / sd x sqrt(weeks). Intervals: 2,000-draw bootstrap over weeks of the trade-level mean (seed 20261004).",
+  "freeze_rule": "On dev, a rule is eligible if it has >= 200 trades, mean return at 25% cost > 0 with bootstrap lower bound > 0, weekly t at 25% cost >= 3.0, and mean at 25% cost > 0 in both 2018-2020 and 2021-2022. Freeze at most 5 eligible rules with the highest 25%-cost Sharpe, at most one per (label, structure, direction). If none is eligible, nothing is frozen and the round fails.",
+  "test_gates": "A frozen rule is a strong success if on test: (1) mean at 25% cost > 0 with bootstrap lower bound > 0; (2) annual Sharpe at 25% cost >= 1.0; (3) weekly t at 25% cost >= 2.0; (4) mean at 50% cost > 0. Rules passing (1) but not all four are reported as weak.",
+  "outputs": "Aggregates only in docs/research8/phase2; trade records private with SHA-256 recorded."
+}
