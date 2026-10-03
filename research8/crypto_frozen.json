@@ -1,0 +1,15 @@
+{
+ "frozen_on": "2026-10-03",
+ "rules": [
+  [
+   "BTC",
+   "straddle",
+   1.1
+  ],
+  [
+   "ETH",
+   "straddle",
+   1.1
+  ]
+ ]
+}
