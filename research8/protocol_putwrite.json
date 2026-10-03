@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "phase": "research8 model-timed index put-writing on public CBOE data",
+  "written_before_any_result": "2026-10-03. The data (CBOE SPX, VIX, PUT index histories; FRED DTB3) were downloaded and only checked for dates and row counts; no value, return or signal has been computed.",
+  "thesis": "The market's 30-day implied vol (VIX) against a stock-only forecast of realized vol (HAR on SPX's own returns) measures the variance premium on offer. Selling index puts only when that premium is large should improve on always selling.",
+  "data": "CBOE daily closes: SPX (1975+), VIX (1990+), PUT = CBOE S&P 500 PutWrite index (daily from 2007; sells one-month ATM SPX puts at each monthly roll, collateralized in T-bills); FRED DTB3 3-month T-bill rate. Stored privately; aggregates only in the repo.",
+  "dates": "Decision dates are the monthly roll closes: the third Friday of each month (the previous trading day if that is not a session). The holding period runs to the next roll close.",
+  "model": {
+    "HAR": "log of the mean squared SPX daily log return over the next 21 sessions regressed on logs of the mean squared return over the last 1, 5, 22 and 66 sessions (floored at 1e-10); least squares refitted each 1 January on all pairs whose target ends before that date (from 1976); forecast = exp(fit) x mean(exp(residual)); sigma_hat = sqrt(252 x forecast)",
+    "EWMA": "lambda 0.94 on daily squared returns, sigma_hat = sqrt(252 x var)"
+  },
+  "signal": "ratio = (VIX / 100) / sigma_hat at the decision close",
+  "rules": "'always' (hold PUT every month) plus 'ratio >= theta' for theta in {1.0, 1.1, 1.2, 1.3, 1.5} with sigma_hat from HAR or EWMA = 11 rules. When not in PUT, hold T-bills (excess return 0).",
+  "returns": "monthly excess return = PUT(next roll) / PUT(roll) - 1 - T-bill return over the period (DTB3/100 x calendar days / 360) when held, else 0; minus a cost of c of notional in every month PUT is held, c in {0, 0.05%, 0.15%}",
+  "statistics": "monthly series; Sharpe = mean / sd x sqrt(12); moving-block bootstrap of months (block 6, 2,000 draws) for the interval and t = mean / bootstrap sd; maximum drawdown and worst month reported",
+  "samples": "dev: decisions 2007-01-01 to 2015-12-31 (periods ending by 2015-12-31); test: decisions from 2016-01-01",
+  "freeze_rule": "Eligible on dev at 0.15% cost: block t >= 2.0 and Sharpe above the 'always' rule's dev Sharpe. Freeze at most 2 by dev Sharpe (one per model). 'always' is reported as the benchmark, never frozen.",
+  "test_gates": "Strong at 0.15% cost: bootstrap lower bound > 0, Sharpe >= 1.0, block t >= 2.0, Sharpe above 'always' on test, and maximum drawdown no larger than that of 'always'. Weak: lower bound > 0 only.",
+  "caveats": [
+    "The PUT index is a benchmark computed from SPX option prices at the roll; real fills differ (costs 0.05%-0.15% of notional per month are charged to cover spreads on one ATM put per month).",
+    "Only about 108 dev months and 117 test months; a Sharpe of 1.0 has a wide interval at this length."
+  ]
+}
