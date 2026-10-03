@@ -1,0 +1,47 @@
+names: AAPL, BABA, AMZN, FB, NVDA, BAC, MSFT, MU, TSLA, GOOGL, JPM, GOOG
+
+1. Static arbitrage: 476,351 equal-wing butterflies; priced below zero at mids 20.15%, at executable prices 0.008%
+
+2. Butterflies held to expiry, P&L as a fraction of wing width (cluster = expiry week x name)
+  expiry spans an earnings release
+   centre -9..-2 implied moves, 2018-21         n= 31233 price= 0.003 payoff-price at mid=-0.0020 (t= -1.2)  at bid/ask=-0.1610
+   centre -9..-2 implied moves, 2022-25         n= 16887 price= 0.005 payoff-price at mid=-0.0043 (t= -3.0)  at bid/ask=-0.0779
+   centre -2..-1 implied moves, 2018-21         n= 32486 price= 0.013 payoff-price at mid=-0.0067 (t= -3.4)  at bid/ask=-0.3580
+   centre -2..-1 implied moves, 2022-25         n= 18658 price= 0.021 payoff-price at mid=+0.0023 (t= +0.8)  at bid/ask=-0.1371
+   centre -1..-0.5 implied moves, 2018-21       n= 21381 price= 0.020 payoff-price at mid=-0.0080 (t= -3.0)  at bid/ask=-0.6110
+   centre -1..-0.5 implied moves, 2022-25       n= 11706 price= 0.034 payoff-price at mid=-0.0068 (t= -2.4)  at bid/ask=-0.2669
+   centre -0.5..+0.5 implied moves, 2018-21     n= 44575 price= 0.023 payoff-price at mid=-0.0025 (t= -1.2)  at bid/ask=-0.8194
+   centre -0.5..+0.5 implied moves, 2022-25     n= 25252 price= 0.037 payoff-price at mid=-0.0063 (t= -2.5)  at bid/ask=-0.4250
+   centre +0.5..+1 implied moves, 2018-21       n= 16496 price= 0.027 payoff-price at mid=+0.0088 (t= +2.8)  at bid/ask=-0.5240
+   centre +0.5..+1 implied moves, 2022-25       n= 11603 price= 0.036 payoff-price at mid=-0.0002 (t= -0.1)  at bid/ask=-0.3854
+   centre +1..+2 implied moves, 2018-21         n= 24302 price= 0.020 payoff-price at mid=+0.0089 (t= +2.9)  at bid/ask=-0.2839
+   centre +1..+2 implied moves, 2022-25         n= 18613 price= 0.024 payoff-price at mid=+0.0108 (t= +3.2)  at bid/ask=-0.2043
+   centre +2..+9 implied moves, 2018-21         n= 26750 price= 0.004 payoff-price at mid=+0.0037 (t= +2.2)  at bid/ask=-0.1144
+   centre +2..+9 implied moves, 2022-25         n= 21210 price= 0.006 payoff-price at mid=+0.0030 (t= +1.9)  at bid/ask=-0.0680
+  expiry does not span an earnings release
+   centre -9..-2 implied moves, 2018-21         n= 23702 price= 0.003 payoff-price at mid=+0.0015 (t= +0.7)  at bid/ask=-0.1732
+   centre -9..-2 implied moves, 2022-25         n= 15847 price= 0.004 payoff-price at mid=-0.0020 (t= -1.7)  at bid/ask=-0.0564
+   centre -2..-1 implied moves, 2018-21         n= 12532 price= 0.018 payoff-price at mid=-0.0055 (t= -1.6)  at bid/ask=-0.3411
+   centre -2..-1 implied moves, 2022-25         n=  7415 price= 0.028 payoff-price at mid=+0.0013 (t= +0.3)  at bid/ask=-0.1559
+   centre -1..-0.5 implied moves, 2018-21       n=  7005 price= 0.031 payoff-price at mid=-0.0147 (t= -3.3)  at bid/ask=-0.5944
+   centre -1..-0.5 implied moves, 2022-25       n=  3955 price= 0.049 payoff-price at mid=-0.0052 (t= -1.0)  at bid/ask=-0.2926
+   centre -0.5..+0.5 implied moves, 2018-21     n= 14206 price= 0.040 payoff-price at mid=-0.0081 (t= -2.0)  at bid/ask=-0.7271
+   centre -0.5..+0.5 implied moves, 2022-25     n=  7899 price= 0.063 payoff-price at mid=-0.0137 (t= -3.2)  at bid/ask=-0.3151
+   centre +0.5..+1 implied moves, 2018-21       n=  6240 price= 0.038 payoff-price at mid=+0.0140 (t= +2.7)  at bid/ask=-0.5265
+   centre +0.5..+1 implied moves, 2022-25       n=  3897 price= 0.057 payoff-price at mid=-0.0042 (t= -0.7)  at bid/ask=-0.2764
+   centre +1..+2 implied moves, 2018-21         n= 10154 price= 0.024 payoff-price at mid=+0.0099 (t= +2.4)  at bid/ask=-0.2835
+   centre +1..+2 implied moves, 2022-25         n=  7097 price= 0.033 payoff-price at mid=+0.0126 (t= +2.7)  at bid/ask=-0.1579
+   centre +2..+9 implied moves, 2018-21         n= 17519 price= 0.004 payoff-price at mid=+0.0040 (t= +2.2)  at bid/ask=-0.1152
+   centre +2..+9 implied moves, 2022-25         n= 15561 price= 0.004 payoff-price at mid=+0.0030 (t= +1.9)  at bid/ask=-0.0543
+
+3. Roughness: butterfly minus mean of its two neighbours (per width); quintiles within each period
+   2018-21 quintile 1 (cheapest)                n= 52215 price=-0.047 payoff-price at mid=+0.0491 (t=+17.0)  at bid/ask=-0.6450
+   2018-21 quintile 2 (mid)                     n= 52215 price= 0.011 payoff-price at mid=+0.0053 (t= +4.9)  at bid/ask=-0.2393
+   2018-21 quintile 3 (mid)                     n= 52216 price= 0.013 payoff-price at mid=+0.0007 (t= +0.5)  at bid/ask=-0.1566
+   2018-21 quintile 4 (mid)                     n= 52215 price= 0.024 payoff-price at mid=-0.0039 (t= -2.7)  at bid/ask=-0.2551
+   2018-21 quintile 5 (richest)                 n= 52216 price= 0.080 payoff-price at mid=-0.0484 (t=-16.6)  at bid/ask=-0.7649
+   2022-25 quintile 1 (cheapest)                n= 32723 price=-0.012 payoff-price at mid=+0.0265 (t=+11.3)  at bid/ask=-0.3272
+   2022-25 quintile 2 (mid)                     n= 32723 price= 0.020 payoff-price at mid=+0.0033 (t= +2.3)  at bid/ask=-0.0949
+   2022-25 quintile 3 (mid)                     n= 32724 price= 0.018 payoff-price at mid=+0.0022 (t= +1.4)  at bid/ask=-0.0659
+   2022-25 quintile 4 (mid)                     n= 32723 price= 0.030 payoff-price at mid=-0.0031 (t= -2.0)  at bid/ask=-0.1094
+   2022-25 quintile 5 (richest)                 n= 32724 price= 0.065 payoff-price at mid=-0.0265 (t=-10.0)  at bid/ask=-0.3981
