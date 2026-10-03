@@ -9,7 +9,7 @@ Cost control:
   3. `estimate` prices a sample of days with metadata.get_cost and extrapolates BEFORE anything is downloaded.
 
   export DATABENTO_API_KEY=...
-  python data_pulls/databento_pull.py estimate --start 2023-10-02 --end 2026-10-02
+  python data_pulls/databento_pull.py estimate --start 2023-10-02 --end 2026-10-02 --contracts contracts_by_day.csv.gz
   python data_pulls/databento_pull.py pull     --start 2023-10-02 --end 2026-10-02 --out ~/stock/databento_hourly
 
 Outputs (pull): one CSV.gz per underlying per month of quote snapshots (ts, symbol, expiry, strike, cp, bid, ask,
@@ -56,8 +56,26 @@ def closes(c, start, end):
     return out
 
 
+_LIST = None
+
+
+def listed(args):
+    """Optional WRDS-built list (data_pulls/wrds_contract_list.py): {date: [symbols]}; saves the definition requests."""
+    global _LIST
+    if _LIST is None:
+        _LIST = {}
+        if args.contracts:
+            df = pd.read_csv(os.path.expanduser(args.contracts))
+            _LIST = {d: g['symbol'].tolist() for d, g in df.groupby('date')}
+    return _LIST
+
+
 def contracts(c, day, prev, args):
-    """OPRA raw symbols to request for one day, filtered by expiry and DTE-scaled moneyness."""
+    """OPRA raw symbols to request for one day: from the WRDS list when it covers the day, else from Databento
+    definitions filtered by expiry and DTE-scaled moneyness."""
+    lst = listed(args)
+    if day.isoformat() in lst:
+        return lst[day.isoformat()]
     d0 = dt.datetime.combine(day, dt.time(0), ET)
     df = c.timeseries.get_range(dataset=OPRA, schema='definition', stype_in='parent',
                                 symbols=[f'{u}.OPT' for u in UNDERLYINGS],
@@ -181,5 +199,6 @@ if __name__ == '__main__':
     ap.add_argument('--times', nargs='+', default=['10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
                     help='ET snapshot minutes')
     ap.add_argument('--sample', type=int, default=8, help='days priced by estimate')
+    ap.add_argument('--contracts', default=None, help='WRDS contract list (contracts_by_day.csv.gz); days it covers skip definitions')
     a = ap.parse_args()
     estimate(a) if a.mode == 'estimate' else pull(a)
