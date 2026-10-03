@@ -45,10 +45,15 @@ def liquid(qs):
     return True
 
 
-def build_paths(work):
-    """Per name and session: the candidate straddle, plus quote and spot paths for LOOKAHEAD sessions."""
+def build_paths(work, top=None):
+    """Per name and session: the candidate straddle, plus quote and spot paths for LOOKAHEAD sessions.
+    top: keep SPY plus the `top` most liquid panel names (by research8_phase2/liquid50.json order)."""
     pan = P.load(os.path.join(work, 'panel_ext.npz'))
     meta = json.load(open(os.path.join(work, 'meta.json')))
+    if top:
+        order = json.load(open(os.path.join(os.path.dirname(work), 'research8_phase2', 'liquid50.json')))
+        keep = [s for s in order if s in set(meta['secids'])][:top]
+        meta['secids'] = [SPY] + [s for s in keep if s != SPY]
     dates = pan['dates']
     days = [dt.date.fromordinal(int(d)) for d in dates]
     col = {int(s): j for j, s in enumerate(pan['names'])}
@@ -151,8 +156,8 @@ def fair_values(pan, cands):
     return {k: v for k, v in zip(keys, out)}
 
 
-def paths(work):
-    pan, cands = build_paths(work)
+def paths(work, top=None):
+    pan, cands = build_paths(work, top)
     fair = fair_values(pan, cands)
     for c in cands:
         c['fpath'] = [fair.get((c['t'] + k, c['j'], c['te'], c['K']), np.nan) for k in range(len(c['qpath']))]
@@ -274,9 +279,10 @@ def main():
     ap.add_argument('mode', choices=['paths', 'dev', 'final'])
     ap.add_argument('--work', default='../wrds_studies/research8_daily_work')
     ap.add_argument('--docs', default='docs/research8/converge')
+    ap.add_argument('--top', type=int, default=10, help='SPY plus this many most liquid names')
     a = ap.parse_args()
     if a.mode == 'paths':
-        paths(a.work)
+        paths(a.work, a.top)
         return
     pan = P.load(os.path.join(a.work, 'panel_ext.npz'))
     cands = pickle.load(open(os.path.join(a.work, 'converge_paths.pkl'), 'rb'))
