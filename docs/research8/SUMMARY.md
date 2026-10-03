@@ -77,5 +77,8 @@ gates: strong none, weak none
 
 ## Daily panel volatility premium
 
-Not run yet.
+**dev.json** (dev): eligible 0, frozen []
+- `spy|expiry|hedged|all|sell|`: n=218, +1.8% [-3.1, +5.7], Sharpe 0.36, t 0.55
+- `spy|expiry|hedged|no_release|sell|`: n=218, +1.8% [-3.2, +5.8], Sharpe 0.36, t 0.55
+- `spy|5|unhedged|all|sell|`: n=218, +0.6% [-2.0, +2.6], Sharpe 0.18, t 0.38
 
