@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "phase": "research8 cross-sectional long-short vol book on the phase 2 records",
+  "written_before_any_result": "2026-10-03, after the phase 2 (A0) test failure and the ruler dev failure, before any result of this design",
+  "motivation": "The A0 test failed while the median market/model ratio rose from about 1.02 (dev) to 1.09 (2023+). Ranking within a week removes the market-wide level and keeps only relative mispricing.",
+  "construction": "Each calendar week (Monday start) and label, records of one structure with finite signal are sorted by the signal; with n records and quantile q, the top floor(n/q) are sold and the bottom floor(n/q) bought, equal premium per trade, held to expiry (hedged or unhedged exactly as phase 2). Needs n >= 2q. Week return = 0.5 x (mean long return + mean short return), returns per premium after costs as phase 2.",
+  "signals": "rho and rho_rel from protocol_phase2.json (phase 1 best_crps model HAR_FHS_shrunk)",
+  "rules": "label {5} x structure {2} x hedge {2} x signal {rho, rho_rel} x q {3, 5} = 80",
+  "statistics": "Sharpe and t from the weekly series over all sample weeks (inactive weeks 0); interval = bootstrap over active weeks of the mean active-week return (2,000 draws)",
+  "samples": "as phase 2 (dev: original names, expiry <= 2022-12-30; test: expanded names from 2023-01-03; secondary: original names from 2023)",
+  "freeze_rule": "Eligible on dev: >= 100 active weeks, 25%-cost lower bound > 0, weekly t >= 3.0, positive 25%-cost mean in 2018-2020 and 2021-2022. Freeze at most 3 by Sharpe, at most one per (label, structure).",
+  "test_gates": "as phase 2 (strong: lower bound > 0, Sharpe >= 1.0 and t >= 2.0 at 25% cost, positive at 50% cost)",
+  "prior_exposure": "as phase 2"
+}
