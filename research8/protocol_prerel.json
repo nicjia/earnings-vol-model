@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "phase": "research8 pre-release long premium conditioned on the stock-only model",
+  "written_before_any_result": "2026-10-03, after the A0 test, ruler and cross-sectional failures, before any result of this design",
+  "thesis": "The validated pre-release implied-vol rise (STRATEGIES S1-S5) should be larger when options are cheap relative to the stock-only value (they converge toward fair value as the release nears).",
+  "trades": "Phase 2 P-4 and P-1 records (same contracts, liquidity and exclusions); bought at the decision close mid and sold at the P close mid of the same legs (both quotes required). Hedged variant: daily delta hedge at stock closes from the decision close to P with entry-IV Black-Scholes deltas, unwound at P, 2 bp cost.",
+  "returns": "(exit mid - entry mid [+ hedge]) / entry mid - cost x (entry + exit half-spreads) / entry mid - 4 x $0.0065 - hedge cost; cost in {0, 25%, 50%, 100%}",
+  "rules": "label {P-4, P-1} x structure {straddle, strangle} x hedge {hedged, unhedged} x {all, rho <= 1.0/0.95/0.9/0.85, rho_rel <= 1.0/0.9} = 56 rules (model HAR_FHS_shrunk)",
+  "samples": "dev: original names with P <= 2022-12-30; test: expanded names with decision >= 2023-01-03; secondary: original names from 2023",
+  "freeze_rule": "Eligible on dev: >= 200 trades, 25%-cost lower bound > 0, weekly t >= 3.0, positive 25%-cost mean in 2018-2020 and 2021-2022. Freeze at most 3 by Sharpe, at most one per (label, structure).",
+  "test_gates": "as phase 2 (strong / weak)",
+  "prior_exposure": "Stronger than other rounds: unconditional pre-release long straddles/strangles were tested on sample E (research7) and passed. The 'all' rules here are close to S2/S3/S1 replications with hold-to-P exits on research7 contracts; only the rho filters are new."
+}
