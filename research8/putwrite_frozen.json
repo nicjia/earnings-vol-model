@@ -1,0 +1,16 @@
+{
+ "frozen_on": "2026-10-03",
+ "rules": [
+  [
+   "ratio",
+   "EWMA",
+   1.0
+  ],
+  [
+   "ratio",
+   "HAR",
+   1.5
+  ]
+ ],
+ "note": "HAR>=1.5 held only 5 of 107 dev months; eligible by the rule but weakly supported"
+}
