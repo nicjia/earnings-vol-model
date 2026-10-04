@@ -76,6 +76,8 @@ def contracts(c, day, prev, args):
     lst = listed(args)
     if day.isoformat() in lst:
         return lst[day.isoformat()]
+    if lst and not args.use_definitions:
+        return []  # day not covered by the WRDS list: skip (no definition request, no cost)
     d0 = dt.datetime.combine(day, dt.time(0), ET)
     df = c.timeseries.get_range(dataset=OPRA, schema='definition', stype_in='parent',
                                 symbols=[f'{u}.OPT' for u in UNDERLYINGS],
@@ -126,6 +128,9 @@ def estimate(args):
     start, end = dt.date.fromisoformat(args.start), dt.date.fromisoformat(args.end)
     cl = closes(c, start, end)
     days = trading_days(start, end, cl)
+    lst = listed(args)
+    if lst and not args.use_definitions:
+        days = [d for d in days if d.isoformat() in lst]
     sample = sorted(random.Random(0).sample(days, min(args.sample, len(days))))
     cost, n = 0.0, 0
     for day in sample:
@@ -199,6 +204,7 @@ if __name__ == '__main__':
     ap.add_argument('--times', nargs='+', default=['10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
                     help='ET snapshot minutes')
     ap.add_argument('--sample', type=int, default=8, help='days priced by estimate')
+    ap.add_argument('--use-definitions', action='store_true', help='for days outside --contracts, query Databento definitions')
     ap.add_argument('--contracts', default=None, help='WRDS contract list (contracts_by_day.csv.gz); days it covers skip definitions')
     a = ap.parse_args()
     estimate(a) if a.mode == 'estimate' else pull(a)
