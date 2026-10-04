@@ -178,6 +178,46 @@ had already passed E), and only forward paper trading with recorded fills can de
   implied is well above a model forecast" (SPX 2016-26 strong, BTC 2023-26 strong, SPX-CNDR 1990-2006 weak, NDX
   synthetic fail, ETH fail), each pass rests on 9-14 trades. Paper trade only.
 
+## Leads, not validated (research8 exploratory, reused data; 2026-10-03)
+
+Found on data inspected in earlier rounds, so they are hypotheses for a fresh test, not strategies. Significance is
+judged against every variant tried on that data (Holm, `research8/registry.py`, `research8/trials.jsonl`).
+
+### L1. Debit spread in the direction of a large release move (strongest lead)
+
+- **Signal:** at the Q close, the release move |log(close Q / close P)| >= the implied move M measured at P.
+- **Trade:** research7 post-release momentum vertical (long ATM, short the strike nearest S(1 +/- M_Q)) in the direction
+  of the move; exit at the Q+2 or Q+4 close.
+- **50 most liquid names, 2018-2025:** Q+4 exit +16.7% per trade at mid, +11.1% after fees and 25% of the half-spread
+  (416 trades, t 3.5, Sharpe 1.26, positive in 2018-21 and 2022-25); Q+2 exit +8.2% after costs (t 3.2). The only
+  exploratory variant surviving Holm at 5% across 53 tries (adjusted p 0.023, midpoint). Fading the move loses (-12% to -19%).
+- **Stock version:** following moves >= 1.5x the name's typical release move earns +46 bp (2 days) to +81 bp (10 days)
+  abnormal, t 2.4-3.0, before 10 bp round-trip fees.
+
+### L2. Surprise-confirmed drift (stock)
+
+- EPS surprise in the top/bottom 20% (trailing year, all names) and the release move agrees: follow for 20 sessions,
+  +162 bp abnormal (352 trades, t 3.2, Sharpe 0.97, both halves positive; Holm-adjusted p 0.07).
+
+### L3. Pre-release strangle P-1 to P (gross)
+
+- +3.0% to +3.2% per trade at mid (1,407 trades, t 3, Sharpe ~1.1), hedged or not, but -0.3% to +0.9% after costs.
+  Real but the size of the spread; worth re-testing with midday fills.
+
+## What research8 established (2026-10-03)
+
+- **Stock-only distribution model works as a forecaster:** HAR_FHS_shrunk (HAR variance on overnight/Garman-Klass inputs,
+  empirical shape, shrunk release jump) passed its untouched test (expanded names 2023-25: CRPS +2.2%, log score +0.147
+  nats, calibrated). It values earnings straddles within ~4% of the market on average, and realized payoffs match it.
+- **It does not beat option prices:** when model and market disagree, the market is usually right. In the daily
+  convergence test the price/fair gap did close (+4% to +16% of premium) but by the model's fair value moving toward the
+  market, leaving ~0 at mid.
+- **Costs decide almost everything:** closing-quote round-trip spreads are 2-4% of premium, larger than the midpoint edge
+  of nearly every rule. End-of-day (closing) quotes are the worst case; midday quotes are the next data to get.
+- **American exercise is negligible for these trades:** early-exercise premium ~0.04% (calls) and 0.1-0.3% median (puts)
+  of price on 1,500 traded legs.
+- **Hedge-cost note:** some earlier hedged results charged hedging per leg, not on the net delta (conservative).
+
 ## Provisional
 
 ### P1. Short 2x iron fly, P-4 to Q+4, standard (no filter, or R >= 1.0)
@@ -195,6 +235,13 @@ had already passed E), and only forward paper trading with recorded fills can de
 
 ## Tested and rejected (do not trade)
 
+- **research8 (2026-10-03), each pre-registered, all failures kept** (`research8/README.md`, `docs/research8/`):
+  market price vs stock-only value (320 rules; two frozen rules failed the test, -4.8% and -9.3% at 25% cost); strangle vs
+  straddle ruler (60); weekly cross-sectional long-short vol book (80); boosted direct trader (8); model-filtered
+  pre-release long premium (56); skew relative value (30); stock drift/fade/premium around releases (63); weekly stock
+  factors (12); daily-panel model-timed volatility premium on SPY + 40 names (96); convergence engine, buy cheap / sell
+  rich vs fair value with daily re-evaluation (32); volatility term-structure calendars (12; +0-0.7% at mid vs 2.2-2.9%
+  spreads); model-timed Nasdaq-100 puts (synthetic, failed); ETH weekly straddles (failed).
 - **Weekly calendars and double calendars held through earnings** (including short weekly / long next week at the
   expected-move edges, entered 1-4 sessions before the release and held to the short weekly's expiry): positive at midpoint
   (+3% to +14%) but negative at 25% of the half-spread on untouched names. All five frozen calendar policies failed sample E.
@@ -210,5 +257,5 @@ had already passed E), and only forward paper trading with recorded fills can de
 - Equal risk per trade (research convention); the illustration used 2% of equity at risk per trade with overlapping positions.
 - Never hold the pre-release strategies (S1-S5) through the release.
 
-Sources: `research7/` (code and protocol), `docs/research7/` (A-D results), `docs/research7/E/REPORT_E.md` (sample E),
+Sources: `research8/` and `docs/research8/` (this round; generated summary `docs/research8/SUMMARY.md`), `research7/` (code and protocol), `docs/research7/` (A-D results), `docs/research7/E/REPORT_E.md` (sample E),
 `docs/research7/sharpe_dsr.json` (Sharpe and deflated Sharpe).
